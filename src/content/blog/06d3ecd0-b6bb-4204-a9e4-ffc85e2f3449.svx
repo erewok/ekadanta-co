@@ -1,0 +1,324 @@
+---
+pubdate: 2020-12-16
+lede: The other day at work someone asked me on Slack why their Python code was behaving in an odd way. I took a look and was completely wrong in my first response.
+published: True
+title: A Little Disassembling
+pid: 06d3ecd0-b6bb-4204-a9e4-ffc85e2f3449
+contentEncoding: ContentMarkdown
+resourceType: BlogPost
+featuredImage: /images/children_pool_sea_wall.jpg
+tags: ['Python']
+---
+
+The person who asked me this question had boiled it down to two interesting functions. Here's his first function, rendered into an iPython console:
+
+```python
+In [2]: def regularor():
+...:     x = 100
+...:     i = 0
+...:     while i < 100 or x < 105:
+...:         print(i)
+...:         print(x)
+...:         x+=1
+...:         i +=1
+...:
+```
+
+And here's the second:
+
+```python
+In [3]: def bitor():
+...:     x = 100
+...:     i = 0
+...:     while i < 100 | x < 105:
+...:         print(i)
+...:         print(x)
+...:         x+=1
+...:         i +=1
+```
+
+
+What do you imagine they'll print out? The output of the first starts like this and goes on for awhile, as you might expect:
+
+```python
+In [4]: regularor()
+0
+100
+1
+101
+2
+102
+3
+103
+4
+104
+5
+105
+6
+106
+7
+107
+8
+108
+.
+.
+.
+```
+
+While the second looks completely different:
+
+```python
+In [5]: bitor()
+0
+100
+1
+101
+2
+102
+3
+103
+```
+
+It stops right there! That sure looks odd!
+
+I took an initial guess as to why the second ended so early and the best part of this experience for me was that I was _wrong_ about what was happening. Fortunately, I had an idea of how we'd resolve this mystery.
+
+Now, the most commonly run Python interpreter is CPython, the official Python interpreter. CPython, as you might expect, is written in C and one good place to start understanding how Python works is to look at the source code. When
+run, Python is first compiled to bytecode which uses `opcodes` and other terms to greatly simplify the job of _evaluating_ a Python program. We can find the various keywords used in Python represented as `opcodes` all
+present in the file [`opcode.h`](https://github.com/python/cpython/blob/master/Include/opcode.h).
+
+Thus, sometimes, to really understand how Python works, it helps to understand how particular opcodes are _evaluated_. For this, we look to the file [`ceval.c`](https://github.com/python/cpython/blob/master/Python/ceval.c), which implements the core evaluation logic for CPython. I remember being really surprised to discover that most of the guts of `ceval.c` are expressed in a single, _massive_ case statement that evaluates any particular chunk of bytecode.
+
+Of course, we don't have to memorize all the opcodes and read `ceval.c` to understand _why_ the above functions behave so differently, but knowing about the opcodes and Python's evaluation function may help us to build a mental model of what's happening. The tool we will use now to solve our puzzle from above is Python's disassembler, conveniently available in the `dis` module, because it will reveal the opcodes underlying the evaluation of these Python functions above.
+
+In Python you can import the `dis` module and load a function into it to be disassembled. For the `regularor` function defined above, here's the _complete_ output from `dis.dis`:
+
+```python
+In [6]: import dis
+In [7]: dis.dis(regularor)
+  2           0 LOAD_CONST               1 (100)
+              2 STORE_FAST               0 (x)
+
+  3           4 LOAD_CONST               2 (0)
+              6 STORE_FAST               1 (i)
+
+  4     >>    8 LOAD_FAST                1 (i)
+             10 LOAD_CONST               1 (100)
+             12 COMPARE_OP               0 (<)
+             14 POP_JUMP_IF_TRUE        24
+             16 LOAD_FAST                0 (x)
+             18 LOAD_CONST               3 (105)
+             20 COMPARE_OP               0 (<)
+             22 POP_JUMP_IF_FALSE       58
+
+  5     >>   24 LOAD_GLOBAL              0 (print)
+             26 LOAD_FAST                1 (i)
+             28 CALL_FUNCTION            1
+             30 POP_TOP
+
+  6          32 LOAD_GLOBAL              0 (print)
+             34 LOAD_FAST                0 (x)
+             36 CALL_FUNCTION            1
+             38 POP_TOP
+
+  7          40 LOAD_FAST                0 (x)
+             42 LOAD_CONST               4 (1)
+             44 INPLACE_ADD
+             46 STORE_FAST               0 (x)
+
+  8          48 LOAD_FAST                1 (i)
+             50 LOAD_CONST               4 (1)
+             52 INPLACE_ADD
+             54 STORE_FAST               1 (i)
+             56 JUMP_ABSOLUTE            8
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+```
+
+If you compare the above output to the function itself, even without any previous experience with Python's opcodes, you maybe can imagine what's happening:
+
+```python
+2           0 LOAD_CONST               1 (100)
+            2 STORE_FAST               0 (x)
+```
+
+Here we are loading a constant and then storing that constant as the value of the variable `x`. Later on, we'll _load_ this variable as well:
+
+```
+7          40 LOAD_FAST                0 (x)
+```
+
+Going back to the problem at hand, it's probably obvious that there is something misaligned with our expectations around these two conditions present in our `while` loops:
+
+```python
+while i < 100 or x < 105:
+...
+while i < 100 | x < 105:
+```
+
+The second uses a binary `or`, which may intuitively seem like it would do the same thing as the Python keyword `or` in the first function. However, let's look at _just_ the bytecode produced by the while loop  in the `regularor` function:
+
+```python
+  4     >>    8 LOAD_FAST                1 (i)
+             10 LOAD_CONST               1 (100)
+             12 COMPARE_OP               0 (<)
+             14 POP_JUMP_IF_TRUE        24
+             16 LOAD_FAST                0 (x)
+             18 LOAD_CONST               3 (105)
+             20 COMPARE_OP               0 (<)
+             22 POP_JUMP_IF_FALSE       58
+```
+
+In plain English, we're loading a variable `i` and a variable `100` and then using a binary comparison operator _to compare these two values_. Immediately after that comparison is evaluated we see `POP_JUMP_IF_TRUE 24`, which means, "if the previous operation evalutes to `True` then _jump immediately_ to instruction 24." Another way to state this is that when Python evaluates `while i < 100 or x < 105:`, _if_ the `i` is less than `100`, then the `x < 105` part is _never evaluated_ because control jumps into the body of the while loop.
+
+Now, for comparison, I'll load disassembler output for the `bitor` function:
+
+```python
+In [8]: dis.dis(bitor)
+  2           0 LOAD_CONST               1 (100)
+              2 STORE_FAST               0 (x)
+
+  3           4 LOAD_CONST               2 (0)
+              6 STORE_FAST               1 (i)
+
+  4     >>    8 LOAD_FAST                1 (i)
+             10 LOAD_CONST               1 (100)
+             12 LOAD_FAST                0 (x)
+             14 BINARY_OR
+             16 DUP_TOP
+             18 ROT_THREE
+             20 COMPARE_OP               0 (<)
+             22 POP_JUMP_IF_FALSE       32
+             24 LOAD_CONST               3 (105)
+             26 COMPARE_OP               0 (<)
+             28 POP_JUMP_IF_FALSE       70
+             30 JUMP_FORWARD             4 (to 36)
+        >>   32 POP_TOP
+             34 JUMP_FORWARD            34 (to 70)
+
+  5     >>   36 LOAD_GLOBAL              0 (print)
+             38 LOAD_FAST                1 (i)
+             40 CALL_FUNCTION            1
+             42 POP_TOP
+
+  6          44 LOAD_GLOBAL              0 (print)
+             46 LOAD_FAST                0 (x)
+             48 CALL_FUNCTION            1
+             50 POP_TOP
+
+  7          52 LOAD_FAST                0 (x)
+             54 LOAD_CONST               4 (1)
+             56 INPLACE_ADD
+             58 STORE_FAST               0 (x)
+
+  8          60 LOAD_FAST                1 (i)
+             62 LOAD_CONST               4 (1)
+             64 INPLACE_ADD
+             66 STORE_FAST               1 (i)
+             68 JUMP_ABSOLUTE            8
+        >>   70 LOAD_CONST               0 (None)
+             72 RETURN_VALUE
+```
+
+We can see right away that it's longer and that the `while` loop, where our expectations are misaligned with the output we're seeing, _is indeed different_ from the first example:
+
+
+```python
+  4     >>    8 LOAD_FAST                1 (i)
+             10 LOAD_CONST               1 (100)
+             12 LOAD_FAST                0 (x)
+             14 BINARY_OR
+             16 DUP_TOP
+             18 ROT_THREE
+             20 COMPARE_OP               0 (<)
+             22 POP_JUMP_IF_FALSE       32
+             24 LOAD_CONST               3 (105)
+             26 COMPARE_OP               0 (<)
+             28 POP_JUMP_IF_FALSE       70
+             30 JUMP_FORWARD             4 (to 36)
+        >>   32 POP_TOP
+             34 JUMP_FORWARD            34 (to 70)
+```
+
+As a reminder, the condition inside the problematic `while` loop looks like this: `while i < 100 | x < 105:`. For the opcodes used in this `while` loop, starting with the first two operations, we see exactly what we saw in the first function, but the third and fourth are different:
+
+```python
+  4     >>    8 LOAD_FAST                1 (i)
+             10 LOAD_CONST               1 (100)
+             12 LOAD_FAST                0 (x)
+             14 BINARY_OR
+```
+
+`BINARY_OR` is the interesting difference here, and here's what [`ceval.c`](https://github.com/python/cpython/blob/52a327c1cbb86c7f2f5c460645889b23615261bf/Python/ceval.c#L1919) does when it sees the `BINARY_OR` opcode:
+
+```python
+        case TARGET(BINARY_OR): {
+            PyObject *right = POP();
+            PyObject *left = TOP();
+            PyObject *res = PyNumber_Or(left, right);
+            Py_DECREF(left);
+            Py_DECREF(right);
+            SET_TOP(res);
+            if (res == NULL)
+                goto error;
+            DISPATCH();
+        }
+```
+
+In short, we pop the two last two loaded values off the variable stack and _compare them_. Thus, these opcodes boil down to the following instructions:
+
+- Load the variable `i`.
+- Load the constant `100`.
+- Load the variable `x`.
+- Binary-or compare the last two.
+
+This then is the problem: Python is _not_ first comparing `i < 100` as we might expect, but instead running `BINARY_OR` on `100` and `x`.
+
+Knowing this, we can insert some parentheses to clarify how Python interprets this code:
+
+```python
+while i < (100 | x) < 105:
+```
+
+Keeping in mind that `x` starts at `100` and is then incremented in each pass off the loop, we end up with a series of checks like the following:
+
+```python
+In [12]: 100 | 100
+Out[12]: 100
+
+In [13]: 100 | 101
+Out[13]: 101
+
+In [14]: 100 | 102
+Out[14]: 102
+
+In [15]: 100 | 103
+Out[15]: 103
+
+In [16]: 100 | 104
+Out[16]: 108
+```
+
+That last value, however, is no longer less than `105`, which is why the `while` loop ends with `x` at `103`! We can see this in greater detail if we evaluate all of these values _as_ binary, keeping in mind that binary `OR` is comparing _each_ bit from two values and if the corresponding bit for one is _truthy_, then the result will also have a _truthy_ bit in that same location:
+
+```python
+In [1]: bin(100)
+Out[1]: '0b1100100'
+
+In [2]: bin(104)
+Out[2]: '0b1101000'
+
+In [3]: bin(108)
+Out[3]: '0b1101100'
+
+In [4]: bin(100 | 104)
+Out[4]: '0b1101100'
+```
+
+Here, we can see that a `BINARY_OR` of `100` and `104` evaluates to `0b1101100`, which is the binary representation of the number `108`. Finally, the term for what we're seeing here is _operator precedence_ where different operators bind to their arguments and are evaluated earlier or later as a result. From the [Python docs on operator precedence](https://docs.python.org/3/reference/expressions.html#operator-precedence) we can see that the bitwis operator `BINARY_OR` binds with a higher precedence than the `or` keyword.
+
+Ultimately, it was thanks to the `dis` module that we were able to puzzle out why these functions behaved so differently, but I appreciated getting this question this problem at work because it was an opportunity to dig into the implementation details of the language with my team and to demonstrate how to use Python's `dis` module to solve puzzles like this one.
+
+I must admit that I also find it fun and refreshing when my initial expectations about how something is evaluated in a language like Python are revealed to be wrong.
+
+One other outcome: I think the person who originally came to me with this problem finally swore off using binary operators as conditions as well.

@@ -1,0 +1,13 @@
+---
+contentEncoding: ContentMarkdown
+featuredImage: /images/children_pool_sea_wall.jpg
+lede: What a great way to be confronted by the limit of things you can hold in your brain at one time!
+pid: 532759f2-1525-4603-8cd1-8ec8b309eec5
+pubdate: 2000-01-01
+published: False
+resourceType: BlogPost
+tags: ['Haskell, Raft, Distributed Systems']
+title: Raft!
+---
+
+Raft!

@@ -1,0 +1,297 @@
+---
+contentEncoding: ContentMarkdown
+featuredImage: /images/old_site_imgs/10fwy_and_110fwy.jpg
+lede: "I believe a lot of open source project popularity is based on convenience. If libraries make certain actions convenient then developers will often overlook the effort to customize behaviors from the library."
+pid: 639bcb85-8894-4101-a486-69615847c106
+pubdate: 2023-08-12
+published: True
+resourceType: BlogPost
+tags: ['python, fastapi, starlette']
+title: "What Cost Convenience: FastAPI and the Responsibility for Others' Opinions"
+---
+
+A number of years ago at work, we started to consider using async Python web frameworks. We had a lot of IO in our web applications and it seemed reasonable to expect that we could probably handle _more_ requests _more_ efficiently if we used async Python. Just to be clear at the outset: we did not expect our apps to be _faster_ by switching to async Python; we were already seeing **sub-100ms** response times in our Flask-Postgresql apps. Instead, our goal at the time was to more efficiently use resources on our Kubernetes clusters: fewer pods, less memory, more concurrent requests.
+
+At the time, someone I worked with said "There's a new web framework called [FastAPI](https://fastapi.tiangolo.com/) I've heard a lot about. We should look at that." So I started comparing async Python frameworks and ultimately decided I _did not_ want to use FastAPI, instead opting to build projects in [Starlette](https://www.starlette.io).
+
+Years later, we've been happy users of Starlette ever since, but every time someone joins our org, they say, "I've never heard of Starlette, but I've heard a lot about FastAPI; we should consider that for our next project!" This article is for those people who ask me "Why don't you want to use FastAPI?"
+
+## My Personal Python Web Framework History
+
+This is maybe dating myself, but I started using my first Python web framework, [Django](https://docs.djangoproject.com/en/4.2/), way back before it offered database migrations. Fast forward to now and I haven't used Django in many years, but I still have a lot of respect for the project. The reason I stopped using it was the slow realization that I was carving out the most opinionated aspects of the framework and replacing them with my own preferences.
+
+It all started with the ORM: after using [SQLAlchemy](https://docs.sqlalchemy.org), I found I strongly preferred its abstractions to the Django ORM because they seemed closer to how I already thought about writing SQL queries (and SQLAlchemy offered convenient ways to run prepared statements if I wanted to eschew ORM features entirely). After discovering SQLAlchemy, I _did not_ want to go back to the Django ORM, where I had to twist my understanding of querying a database into something shaped the way the Django ORM expected it to look. This is not to argue that SQLAlchemy is _better_: I just found it to be more intuitive and thus easier to remember how to use it. Further, from this intuition it was easier for me to write readable and maintainable code, so ultimately I preferred it.
+
+Next was substituting [Jinja2](https://jinja.palletsprojects.com/en/3.1.x/) for the Django template renderer. When I started profiling my Django apps, I was surprised to discover that template rendering was pretty slow, much slower than I'd have thought it would be. Jinja2 was quicker but it also offered more functionality. In fact, the Django template renderer was functionally limited by design, and I found I didn't typically share the Django developers' concerns around limiting the functionality of my template renderer.
+
+Now, Django is a fully featured web framework with an ORM, migrations, a management-command suite, an admin interface, and user-management along with a whole bunch of other useful things, such as il8n, etc. That's a lot of stuff! However, when I started substituting _major_ aspects of Django, such as its ORM and template renderer, it made me wonder if I shouldn't instead look at a smaller framework where I could _build up_ to what I wanted, rather than starting with something large and taking things away.
+
+In other words, if I stopped using Django and cobbled together my own application from smaller pieces, what was I gaining and what was I losing? How much work would I be on the hook for? Had I already been _doing that work_ by swapping out Django pieces and configuring them myself?
+
+## What Open Source Gives and What It Takes Away
+
+In the course of my career working with Python, I've worked on projects using the following web frameworks:
+
+- [Django](https://docs.djangoproject.com)
+- [Flask](https://flask.palletsprojects.com)
+- [Tornado](https://www.tornadoweb.org)
+- [Twisted](https://twisted.org/)
+- [Starlette](https://www.starlette.io)
+- [FastAPI](https://fastapi.tiangolo.com/)
+
+I honestly believe all of these projects have a place. Twisted itself is worth a mention: more than an HTTP framework, it's a networking Swiss army knife where the seeds of async Python were first germinated!
+
+Over time, however, when starting new HTTP projects, I ended up cultivating a strong preference for libraries that tended to offer the slimmest skin over HTTP. These are often called "micro-frameworks".
+
+At PyCon 2015, I attended a talk by Miguel Grinberg, who wrote a pretty well-regarded [tutorial for Flask](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-i-hello-world). He discussed building various features into a Flask app and at the end someone stood up and asked a question phrased something like "Why don't you just use Django?"
+
+Upon hearing this question, most everyone in the room held their breath: most of the audience already _knew_ Miguel did not prefer Django. His interlocutor was someone who had unknowingly stumbled into a holy war question, asking the person who had written a book and given a large number of talks about Flask, in other words someone who had built up a personal brand advocating for Flask, why they didn't "just" use the other more popular web framework?
+
+Ultimately, Miguel replied, "I don't like Django," and then he made a reasoned argument that he preferred a smaller framework because he did not agree with various opinions embedded inside Django. Flask, by contrast with Django, is a "micro-framework" because it's not opinionated about its ORM, template-rendering, user-management, etc.: users have to add and configure those pieces themselves. This is what Miguel wanted: to build something lighter weight using pieces he preferred.
+
+It dawned on me then that there's a rough dichotomy for characterizing open-source projects:
+
+- Kitchen Sink: everything you may possibly want
+- Micro: a modest box of tools and parts you can assemble yourself
+
+For the "kitchen sink" style, if you are satisfied by all the decisions made in the project, then you're probably going to be fine. In this case, if you want to do _some_ things differently, then you will be ignoring or _subtracting_ functionality (which, incidentally, you have already paid some cost for because you had to load that code as part of the project). Further, if you want to _change_ some functionality, then you are in the realm of customization, and some projects make this a lot harder than others. Subtracting or customizing is often fine, especially when the library on the whole speeds up our ability to deliver software and we're not compromising too much in maintainability or performance in our end result. What about when it's _not fine_?
+
+For the "micro" style, the intention of library authors is typically to provide a set of tools users can cobble together into something useful. For these libraries, it's less likely you'll want to take things away, but using these libraries requires both knowledge and opinions about how to glue pieces together. For example, not all projects require a database, so I may not want to load a huge amount of ORM code I'll never use into a project without a database. However, when I do need to connect to a database, when using a microframework I'll need to own decisions around common database functionality such as connection pooling and making sure a database connection is available for each HTTP request that comes into my application.
+
+Another way to approach this discussion is to ask "How much customization will we have, and what will be the cost of that customization?" Is the effort to customize equivalent to starting small and building up to what I want?
+
+Of course, we can expect that some customization will always occur (building an application is perhaps itself an instance of customization). However, with _enough_ customization we're eventually going to pass the threshold of utility and we probably _should_ start with something smaller.
+
+It turns out this question is at the heart of most "should I use this library" discussions of open source libraries.
+
+## Using Open Source Libraries Is About Others' Opinions
+
+As mentioned above, every time I build a project that relies on open source libraries, I'm going to download the source code for all the libraries loaded into it, and I'm going to ship that code somewhere. Ideally, we'd ship the least bloated thing, because it will typically require fewer resources to build, to ship, and to run.
+
+For example, if I'm swapping out the Django template renderer and the ORM, _and_ I don't need user management or an admin interface, then it behooves me to use a _smaller_, _simpler_ library for my web framework. I should not own and ship a lot of opinions I don't need, in other words.
+
+This is what launched me onto my career as a user of Flask. The reason someone may choose a microframework is that they'd like to get away from the opinionated aspects of a larger framework: they don't want to adopt _all_ of the opinions embedded in the framework and they don't want to fight the framework to customize it.
+
+## I Will Need Some Custom Functionality From Your Library at Some Point So Do I Understand It?
+
+There's another aspect to using open source libraries. At some point many years ago, I realized that every time I had a question about an open source library I typically ended up in one or two places looking for answers:
+
+- The docs for the library
+- The Github repo for the library
+
+There's a notable absence here and it was not intentional: Stack Overflow. In contrast to the beginning of my career, after around five years of building web applications, I discovered that I was much more quickly answering questions like "how do I do X with this library?" by _reading the code_. Again, this was not intentional: I just discovered one day that I was habitually going _straight to the code_ when trying to understand what a library was doing and how to use it.
+
+This added another dimension to my "Do I want to use this open source library?" question: do I _understand the code_? Do I like how it's been written? Do I trust the the maintainers of this library to continue developing it purposefully?
+
+Now, I'm not saying here that before you add a dependency to your project, you have to read the whole whole library and understand it enough to reimplement it. However, I personally feel a lot more comfortable using libraries that I find easy to navigate and understand. When I get to my inevitable usage or customization questions, I would like to satisfy my questions by reading the code. I also want to know the code is written with maintainability and adaptability in mind. 
+
+This is a point related to my impulse away from the Django ORM above: does the library enable me to write readable code myself? Is the library understandable? Does it make sense?
+
+I'm not claiming to be perfect in this area, of course. Over the years I have used a lot of libraries that I had only the dimmest grasp of, such as [celery](https://github.com/celery/celery), and my understanding of these libraries has often grown over time. So what I'm comfortable with now is some kind of compromise: when I want to use a library, I'll usually check if it passes a smell test. I'll skim the code and ask myself if it's written comprehensibly. Are its pieces nicely decomposed? Does it make _sense_? Does it see frequent contributions? Are issues discussed reasonably and eventually resolved?
+
+## Why Do Technologies Get Popular
+
+This brings me to FastAPI. When I first looked at it, my initial impression was "This is a whole pile of opinions bolted onto Starlette." In other words, Starlette is a web framework, while FastAPI is a lot of stuff added on top of _a web framework_. Discovering that, I immediately asked myself, "Do I want _these_ opinions or can I just use the real thing?"
+
+I decided to compare the two projects, and I immediately found the [Starlette codebase](https://github.com/encode/starlette) easy to understand and its abstractions intuitive for someone previously inured to working in HTTP:
+
+- an HTTP request is represented by a `Request` class in a module called [`requests.py`](https://github.com/encode/starlette/blob/master/starlette/requests.py)
+- an HTTP response is represented by a `Response` class in a module called [`responses.py`](https://github.com/encode/starlette/blob/master/starlette/responses.py)
+- request routing (one of the most useful aspects of an HTTP framework) is in a module called [`routing.py`](https://github.com/encode/starlette/blob/master/starlette/routing.py)
+- an `Application`  receives a request and passes it to its inner app layers, middleware and then a router,  which creates a `Request` object and invokes the handler with it.
+
+When I found the Starlette project, I was previously familiar with Tom Christie's (the author of Starlette and [`httpx`](https://www.python-httpx.org/)) work in [Django Rest Framework](https://www.django-rest-framework.org/), one of the best-documented projects I had ever encountered around the time it was released.
+
+Reading FastAPI, by contrast, I found a huge amount of code that was thicker to wade through. Why were HTTP methods implemented repeatedly as methods (`get`, `put`, `patch`, etc.) on different objects, for example:
+
+- [application.Application.get](https://github.com/tiangolo/fastapi/blob/master/fastapi/applications.py#L472)
+- [routing.Router.get](https://github.com/tiangolo/fastapi/blob/master/fastapi/routing.py#L901)
+
+Moreover, I found that FastAPI has a huge amount of code for [routing requests](https://github.com/tiangolo/fastapi/blob/master/fastapi/routing.py) but if you're trying to figure out the strategy it uses to _actually select a handler_ for a request, you have to read closely to discover it will ultimately pass routing decisions off to Starlette. We can contrast this with its `request` object which is merely a re-export of [Starlette's request classes](https://github.com/tiangolo/fastapi/blob/master/fastapi/requests.py).
+
+It's hard to read this codebase and not scratch your head a bit: what am I really getting if I use this library instead of using Starlette directly?
+
+## Back to Basics: What's In a Web Framework
+
+Here's what I want to see in an HTTP framework:
+
+- Fast request routing
+- Header and cookie management
+- Request management
+- Turning HTTP requests into HTTP-compliant responses
+
+I don't want the framework to get in my way too much. For instance, when someone working on an HTTP client for my project requests support for some arbitrary HTTP request, then I'll need to quickly access the protocol parts and I'll want to easily return a custom response. Ultimately, I want to work with HTTP _through_ a web framework, but I want the framework to become invisible in the process, like any good tool. I definitely don't want to add abstractions _away_ from HTTP that obscure what's happening with requests and responses.
+
+Back in the Django days, I found that I was often trying to figure out how to do things in a "_Django_ way." In the worst examples of this, I had coworkers who were unsure about how HTTP worked or even how to write arbitrary Python scripts because they were so dependent on the Django framework. Eventually, my opinions about HTTP frameworks came to be something like: give me access to HTTP things and get out of my way.
+
+Now, going back to the list of things I need from a web framework, request-routing, etc., FastAPI doesn't really do the above because these are mostly handled by the web framework that FastAPI sits on top of: Starlette.
+
+Moreover, in addition to the basic parts of a web framework, there are other areas of building a web application that are important to me:
+
+- Configuration management (secrets, environment variables, etc.)
+- State management (DB Connection Pools, cache connection, etc)
+- Structured logging in different formats
+- Metrics and traces
+
+FastAPI doesn't help me with these. So what does it help with?
+
+## What Should Be Convenient
+
+Comparing Starlette with FastAPI, the latter is mostly a set of opinions about the following:
+
+- Dependency Injection for request handlers
+- Request Body Serialization
+- Response Body Serialization
+- OpenAPI and Swagger UI
+
+Some of things may be convenient to use, but I certainly won't need help deserializing request bodies or serializing response bodies: I can select a handful of libraries to help me with this. In fact, of the above the most convenient of these for me is OpenAPI spec generation. I have often deployed a centralized Swagger UI for all of my work projects, so I could really use an OpenAPI spec _only_: I don't want most of my projects to ship and run their own Swagger-UI. It seems like we should be able to take Pydantic model definitions and turn those _into_ OpenAPI specs for our objects, but if you go looking for specific code that plays this role in the FastAPI codebase, you will be disappointed. In fact, a library that does this alone would be hugely useful.
+
+The most ostentatious and surprising opinion in FastAPI is its dependency injection framework, something I find to be an outright questionable goal for a Python web framework.
+
+Consider the following example from the FastAPI docs for [authenticating users via JWT](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/?h=jwt#hash-and-verify-the-passwords):
+
+```python
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = get_user(fake_users_db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+@app.get("/users/me/", response_model=User)
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_current_active_user)]
+):
+    return current_user
+
+```
+
+Note: I didn't include the whole code snippet because it's pretty long.
+
+Now, JWT authentication and authorization is a pretty common setup, but what is FastAPI actually doing here? It was not obvious to me when I first read this example: there's a huge amount of code above which has ostensibly little to do with HTTP. The following declaration alone is magical and unexpected:
+
+```python
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+```
+
+What's this `tokenUrl` argument? What does this class do? Is the `tokenUrl` referring to a handler that I'm going to write?
+
+In order to understand this, we can [read the code](https://github.com/tiangolo/fastapi/blob/master/fastapi/security/oauth2.py#L146) where we discover that this class is _parsing headers_. It also includes a handful of related classes and models which are all used to construct an OpenAPI spec. This is a pretty obfuscated chain of code which effectively has the following responsibilities:
+
+- Pull and validate "Authorization" header
+- OpenAPI Documentation
+
+We can imagine writing a Starlette handler that performs a similar check:
+
+```python
+
+from starlette.responses import JSONResponse
+
+
+# This is what FastAPI's `OAuth2PasswordBearer` does: it parses a request header
+def get_auth_header_with_scheme(request: Request) -> Optional[Tuple[str, str]]:
+    auth_header = request.headers.get("Authorization", "")
+    scheme, token = auth_header.split(" ")
+    if token:
+        return schema, token
+    return None
+
+
+# We can reuse this function from the FastAPI example
+async def get_current_user(schema_token: Optional[Tuple[str, str]]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if not schema_token:
+        raise credentials_exception
+    schema, token = schema_token
+
+    if not token:
+        raise credentials_exception
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = get_user(fake_users_db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+# Here's our reimplemented handler
+async def get_user(request: Request):
+    schema_token = get_auth_header_with_scheme(request)
+    user = await get_current_user(schema_token)
+
+    return JSONResponse({"username": user.username, ...etc})
+```
+
+Again, consider just the params from the the FastAPI handler `get_current_user` handler:
+
+```python
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    ...
+```
+
+
+This is pretty bespoke, FastAPI-looking code. It's not generic Python and for that reason it gives me strong Django vibes. Further, if I do not want FastAPI's Swagger-UI, then I really _don't need any of this_: it provides very little actual HTTP functionality.
+
+Further, what if I need to customize whatever FastAPI's `OAuth2PasswordBearer` does because I have a frontend which prefers to send JWTs as cookies instead of request headers (according to various security recommendation)? In the FastAPI style I'll either need to write my own dependency-injector function or I'll need to go digging in their docs or their codebase for another class with a 6-line method that parses a cookie instead of request headers. I'll also need to figure out how and whether FastAPI can _set cookies for me_.
+
+As you can probably see: I prefer the Starlette example. I don't need any help pulling HTTP request headers or deserializing a particular request body, and I definitely don't find dependency injection via type hinting to be an improvement; it's a lot easier for me to see what my request-handler does when it explicitly pulls and validates headers. I could even write this as my own decorator or middleware (which I would probably do if this were shared across my project anyway...).
+
+## In Conclusion: Convenience At a Cost
+
+As mentioned above, I have a lot of respect for the Django project, but I believe it owes its popularity as a fully-featured web framework to two things:
+
+- User management, and
+- Its Admin interface
+
+These things turn out to be _hugely convenient_ on a lot of projects. However, when I was a user of Django, I often found that I didn't need these things. When I did find them useful, I typically didn't want to install and run "all of Django" to have them. Moreover, Django is a pretty large dependency and notoriously slow compared to competitors: if I don't need the stuff it's mostly offering, I'd like to use something smaller, leaner, quicker.
+
+There is a kind of momentum that open source projects achieve: after enough people have started using and contributing to the community around a project, it starts to cultivate a self-evidential meaning. It surely is the thing to use _because_ so many people use it? This is why someone would stand up at Miguel Grinberg's Flask talk at PyCon and ask him "why don't you just use Django?" It seems _obvious_ to members of the community that this dominant project is successful and lots of people are using it and so there's no further justification needed to select for a new project.
+
+But why do people _start_ using open source projects?
+
+I believe a lot of open source project popularity is based on _convenience_. If libraries make certain actions convenient then developers will often overlook the effort to customize behaviors from the library.
+
+The question in my mind is always: what's the cost of this convenience? If you make certain things convenient for me, which of your library's opinions will I be owning? If you make things convenient, how readable is the code I'll be writing when I take advantage of those conveniences? In the case of the Django ORM and SQLAlchemy, I preferred the code I wrote with the latter. In the case of FastAPI's `OAuth2PasswordBearer`, I find the Starlette example to be a lot clearer to understand and I don't think writing a function or custom middleware to parse request headers is onerous.
+
+Overall, when it comes to FastAPI, I don't care for most of its opinions and I don't find the conveniences it offers particularly helpful. That's why I don't plan to use it.

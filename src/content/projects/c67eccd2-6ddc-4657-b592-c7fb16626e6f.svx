@@ -1,0 +1,309 @@
+---
+contentEncoding: ContentMarkdown
+featuredImage: /images/typermed.jpg
+lede: It's perhaps old school to render HTML via a backend server, but these HTML-rendering functions are simple and clean and it's fast enough for our purposes.
+pid: c67eccd2-6ddc-4657-b592-c7fb16626e6f
+pubdate: 2023-06-26
+published: True
+resourceType: Project
+tags: ['haskell']
+title: Haskell Servant App ekadanta-co
+---
+
+Over the years, I've built many personal websites mostly to have somewhere to write blog-posts or notes for myself on how I've solved different problems. Sometimes in the course of building these sites, I've gotten overly ambitious because I'm trying to learn to do different things that may prove useful in my day job. 
+
+This is what happened with my last site, for instance, where I built a [Servant](https://github.com/haskell-servant/servant) app with an Elm frontend and I quickly got to a point where the application was too large for the amount of time I had to dedicate to it in my spare time (I have a young child at home and other interests as well). 
+
+Now, in the most recent iteration I could have just used a static site generator, because there' s nothing dynamic in the content. However, I really enjoy using Servant to build web applications, so for this most recent version of my site, I built a Servant application that renders HTML and uses an Elasticsearch backend.
+
+The site encompasses a handful of interesting patterns in Haskell and Servant, and the source is [available at Github](https://github.com/erewok/ekadanta-co-servant), so I figured I'd write it up here.
+
+## Elasticsearch Client
+
+First, I wanted to use Elasticsearch for my database because it's a perfectly fine and fast database, but it would also provide nice search capabilities. My needs for adding, editing, and retrieving documents were simple, so I decided to just create my own Elasticsearch client, instead of using the (to my eyes) overly specified, existing Haskell clients for Elasticsearch.
+
+With Servant's API specification, this is actually pretty straightforward, and I created [my Elasticsearch client](https://github.com/erewok/ekadanta-co-servant/blob/main/src/Site/Search.hs) in a few hundred lines of Haskell.
+
+### Elasticsearch Server Spec
+
+Servant notably auto-generates client code in a handful of languages as long as you have an API spec. For the Elasticsearch index used for this site, I created an index called `ekadanta` and a document type `content` and then to craft a client I specified the following Elasticsearch endpoints:
+
+```haskell
+type SearchAPI = 
+  "ekadanta" :> ReqBody '[JSON] Value :> Put '[JSON] Value
+  :<|> "ekadanta" :> "content" :> "_search" :> ReqBody '[JSON] Value :> Post '[JSON] Value
+  :<|> "ekadanta" :> "content" :> Capture "docId" UUID.UUID :> Get '[JSON] Value
+  :<|> "ekadanta" :> "content" :> Capture "docId" UUID.UUID :> ReqBody '[JSON] Resource :> Put '[JSON] Value
+```
+
+Of course, an Elasticsearch server offers a lot more endpoints, but the above spec represents the only actions I needed to support:
+
+1. Create a new index
+1. Search the index.
+1. Retrieving an existing document by id
+1. Index a document (create or update) by id
+
+### Elasticsearch Client
+
+After we have the above Servant spec, we can auto-generate clients to interact with the server, and it's a common pattern with Servant clients to wrap up all the client functions into a custom data type:
+
+```haskell
+data SearchClient = 
+  SearchClient 
+  {
+  createSearchIndex :: Value -> ClientM Value
+  , searchIndexContent :: Value -> ClientM Value
+  , getSearchContent :: UUID.UUID -> ClientM Value
+  , indexDocument :: UUID.UUID -> Resource -> ClientM Value
+  } 
+
+mkSearchClient :: SearchClient
+mkSearchClient = 
+  let 
+    createSearchIndex :<|> searchIndexContent :<|> getSearchContent :<|> indexDocument
+      = client (Proxy :: Proxy SearchAPI)
+  in SearchClient {..}
+```
+
+For example, to actually *search* documents, we would retrieve the proper function via `searchIndexContent $ mkSearchClient` and this will give us a function from ` Value -> ClientM Value`. The `Value` is simply a generic Aeson `Value`, so it represents any arbitrary JSON value as an Elasticsearch query.
+
+There are also some other utility functions we create to actually run the client, and so that we can utilize our config object to dynamically inject backend parameters:
+
+```haskell
+searchContent :: SiteConfig -> Value -> IO (Either ServantError Value)
+searchContent config query = 
+  runSearchClient config 
+    . ($ query)
+    . searchIndexContent
+    $ mkSearchClient
+
+runSearchClient :: SiteConfig -> ClientM a -> IO (Either ServantError a)
+runSearchClient config = (clientEnv config >>=) . runClientM
+
+clientEnv :: SiteConfig -> IO ClientEnv
+clientEnv config = do
+  baseUrl <- parseBaseUrl $ T.unpack $ ( esHost config ) <> ":" <> ( esPort config )
+  manager <- newManager defaultManagerSettings
+  pure $ mkClientEnv manager baseUrl
+```
+
+Thus, given a `SiteConfig` object, which pulls environment variables from the deployment environment into a data structure, and an Elasticsearch query, we can run a particular search function like this:
+
+```haskell
+resourcesResp  <- liftIO $ searchContent config query
+```
+
+### Adding On to Our Elasticserch Client
+
+Working with `Value`s everywhere may be kind of lame, especially when those `Value`s are deeply nested JSON structures (thanks, Elasticsearch...) and when we also know the structure of our document. I *could have* created a custom data type and defined `FromJSON` instances for it from my index type, but Elasticsearch's return types will be different when searching content versus looking it up directly. 
+
+As a result, I just decided to write functions to parse and return our content from `Value`s. In these efforts, [`lens-aeson`](http://hackage.haskell.org/package/lens-aeson) was extremely useful:
+
+```haskell
+getDocument :: SiteConfig -> UUID.UUID -> IO (Either Text Resource)
+getDocument config uid = do
+  resourcesResp <- getContent config uid
+  case resourcesResp of
+    Left err -> pure . Left $ "Failed looking up content"
+    Right value ->
+      case value ^? _Object . ix "_source" of
+        Nothing -> pure . Left $ "Failed looking up content"
+        Just obj -> pure $ decodeEitherResource obj
+
+decodeEitherResource :: Value -> Either Text Resource
+decodeEitherResource val = first T.pack $ parseEither parseJSON val
+```
+
+My site content is defined elsewhere as a type named `Resource`, and above, we can see that `lens-aeson` allows us to treat results as `Maybe Object`s with selectors such as `_Object`. The following, for instance, says "treat `value` as an `Object` and attempt to pull out the key 'source' and if that fails give me a `Nothing`":
+
+```haskell
+...
+   case value ^? _Object . ix "_source" of
+...
+```
+
+It's a pretty convenient way to deal with arbitrary JSON.
+
+For a more complex example, consider the functions that pull out search results:
+
+```haskell
+getResourceHits :: SiteConfig -> Value -> IO (Either Text [Resource])
+getResourceHits config query = do
+  resourcesResp <- searchContent config query
+  case resourcesResp of
+    Left err -> pure . Left $ "Failed looking up content"
+    Right value -> pure . Right $ pullHitsResources value
+
+pullHitsResources :: Value -> [Resource]
+pullHitsResources value = 
+  let
+    sources = 
+      value 
+        ^? key "hits" 
+        . key "hits"
+        . _Array 
+        ^.. folded 
+        . traverse 
+        . key "_source"
+  in mapMaybe decodeMaybeResource sources
+```
+
+The latter function may be reducable, because I'm still learning lens-aeson and lens operators, but I think once you get past the funny looking operators, it's actually somewhat readable, more so in fact than the equivalent Python I'd have to write to pull out each `"source"` key in an array nested inside two objects.
+
+### Creating Elasticsearch Queries
+
+My endpoint handlers would also need queries to issue requests using my Elasticsearch clients, so I created some helper functions to craft Elasticsearch queries. Here's an example:
+
+```haskell
+searchPaginatingQ :: ResourceType -> PageCount -> Offset -> Value
+searchPaginatingQ rt Nothing offset = Object $ HM.fromList [
+  ( "from", toJSON offset )
+  , ( "size", toJSON _DEFAULT_PAGE_COUNT )
+  , ( "query", resourceTypeTerm rt )
+  , ( "sort", pubDateDescSort ) 
+  , ("aggs", Object $ HM.fromList [ ("tags", tagsAgg), ("counts", docTypeCount) ] )
+  ]
+searchPaginatingQ rt (Just count) offset = Object $ HM.fromList [
+  ( "from", toJSON offset )
+  , ( "size", toJSON count )
+  , ( "query", resourceTypeTerm rt )
+  , ( "sort", pubDateDescSort ) 
+  , ("aggs", Object $ HM.fromList [ ("tags", tagsAgg), ("counts", docTypeCount) ] )
+  ]
+```
+
+Putting it all together, [one of my handlers](https://github.com/erewok/ekadanta-co-servant/blob/main/src/Site/PublicResources.hs) can issue a request and retrieve some results like this:
+
+```haskell
+-- | Generic retrieval handler that will lookup content and return Detail Page for it
+getPaginatedContent :: ResourceType -> Int -> EkadantaApp (SCE.Envelope '[AppErrors] Html)
+getPaginatedContent rt pgNum = do
+  let query = searchPaginatingQ rt Nothing $ (pgNum - 1) * _DEFAULT_PAGE_COUNT
+  config     <- asks _getConfig
+  resourcesResp  <- liftIO $ searchContent config query
+  case searchContentListProcessor pgNum resourcesResp rt of
+    Left err ->  SCE.pureErrEnvelope ContentLoadFailure
+    Right render -> SCE.pureSuccEnvelope render
+
+searchContentListProcessor :: Int -> Either ServantError Value -> ResourceType -> Either T.Text Html
+searchContentListProcessor pgNum searchResult rt =
+  case searchResult of
+    Left err -> Left "Failed looking up content"
+    Right result -> do
+      let resources = pullHitsResources result
+          resourceTotals = pullAggsKey "counts" result
+          postTotal =  getKeyCount (T.pack . show $ rt) resourceTotals
+          pageCount = (fromMaybe 0 postTotal) `div` _DEFAULT_PAGE_COUNT
+          tagCounts = pullAggsKey "tags" result
+          tagList = tagCounts ^.. folded . traverse . (_Object . ix "key" . _String)
+      pure $ contentListPage (pageCount, pgNum) rt tagList resources
+```
+
+The top function runs the search function and then passes it to the `searchContentListProcessor` which pulls out the aggregation results (tags, page counts, etc.) and renders some HTML using the renderin function `contentListPage`.
+
+## Servant and Blaze
+
+I actually really enjoy using [Blaze](http://hackage.haskell.org/package/blaze-html) because it allows for easily separating out chunks of markup into discrete functions which can be reused, and, in my opinion, it makes for clean-looking markup. 
+
+For the `contentListPage` function referenced in the handler above, for instance, I created [the following functions](https://github.com/erewok/ekadanta-co-servant/blob/main/src/Site/Html/ContentList.hs):
+
+```haskell
+renderContentList :: [Resource] -> Html
+renderContentList content = mconcat $ map renderContentListItem content
+
+renderContentListItem :: Resource -> Html
+renderContentListItem item =
+  H.div ! A.class_ "content-list-item" $ do
+    renderContentListItemFeaturedImg item
+    renderContentListItemLede item
+    renderContentListItemTagList (item ^. tags)
+```
+
+The above referenced functions like this:
+
+```haskell
+renderContentListItemFeaturedImg :: Resource -> Html
+renderContentListItemFeaturedImg item = 
+  case (item ^. featuredImage) of
+    Nothing -> pure ()
+    Just img -> H.div ! A.class_ "content-list-item-featured-img" $
+      H.img ! A.src (H.toValue img)
+
+renderContentListItemLede :: Resource -> Html
+renderContentListItemLede item = 
+  H.div ! A.class_ "content-list-item-lede" $ do
+    H.span ! A.class_ "content-list-item-date" $ H.toMarkup (item ^. pubdate)
+    H.h3 $ H.toMarkup (item ^. title)
+    H.p $ H.toMarkup (item ^. lede)
+    H.div ! A.class_ "content-list-item-read-more" $
+      readMoreLink item
+```
+
+Due to the indentation, I find that the nested parent-child relationships between tags are easy to visualize and any chunk of markup can be easily refactored out into a separate function.
+
+## Servant Spec
+
+As with the Elasticsearch server, to use Servant to create clients, servers, documentation, or even automated tests for an API, we must have a spec for it. For this site, we'll need a server, so for the public-facing pages, our spec looks like this:
+
+```haskell
+type PublicApi = 
+  "posts" :> SCE.Throws AppErrors :> Get '[HTML] Html
+  :<|> "projects" :> SCE.Throws AppErrors :> Get '[HTML] Html
+  :<|> "posts" :> Capture "pgNum" Int :> SCE.Throws AppErrors :> Get '[HTML] Html
+  :<|> "projects" :> Capture "pgNum" Int :> SCE.Throws AppErrors :> Get '[HTML] Html
+  :<|> "posts" :> Capture "post_id" UUID.UUID :> SCE.Throws AppErrors :> Get '[HTML] Html
+  :<|> "projects" :> Capture "post_id" UUID.UUID :> SCE.Throws AppErrors :> Get '[HTML] Html
+  :<|> "search" :> ReqBody '[FormUrlEncoded] SearchForm :> Post '[HTML] Html
+  :<|> "about" :> Get '[HTML] Html
+  :<|> "contact" :>  Get '[HTML] Html
+  :<|> "contact" :> ReqBody '[FormUrlEncoded] ContactForm :> Post '[HTML] Html
+  :<|> Get '[HTML] Html
+```
+
+The associated server definition relies on a number of handlers, which get reused in different contexts:
+
+```haskell
+publicHandlers :: ServerT PublicApi EkadantaApp
+publicHandlers =
+  getPaginatedContent BlogPost 1
+  :<|> getPaginatedContent Project 1
+  :<|> getPaginatedContent BlogPost
+  :<|> getPaginatedContent Project
+  :<|> getResourceH
+  :<|> getResourceH
+  :<|> searchResultsPostH
+  :<|> aboutGetH
+  :<|> contactGetH
+  :<|> contactPostH
+  :<|> homeH
+```
+
+There are some somewhat complicated aspects to creating a server with authentication, with errors, and with using our own monad, but I'm going to leave those details out for here. Consult the repo for this project and also read the associated servant cookbooks for simpler recipes for this.
+
+## Deploying Docker Containers
+
+Lastly, in order to deploy this site, I wanted to build and run a docker container, but unfortunately, the docker images required to do so often stretch into the GB size. 
+
+To resolve this, I've been using multi-stage builds, so the [docker file for this application](https://github.com/erewok/ekadanta-co-servant/blob/main/Dockerfile) first loads dependencies and then installs the project and then in a later stage copies the executables in a base debian image, like this:
+
+```
+FROM debian:bullseye-slim as base_os
+
+COPY --from=builder /root/.cabal/bin/ekadanta-co /opt/ekadanta-co/bin/
+
+WORKDIR /opt/ekadanta-co/
+
+COPY static ./static
+
+RUN adduser --disabled-password --gecos "" ekadanta \
+    && chown -R ekadanta:ekadanta /opt/ekadanta-co
+
+USER ekadanta
+EXPOSE 8000
+
+CMD ["/opt/ekadanta-co/bin/ekadanta-co"]
+```
+
+After that, we have Github actions to [run tests](https://github.com/erewok/ekadanta-co-servant/blob/main/.github/workflows/haskell.yml) and [build and push the docker image](https://github.com/erewok/ekadanta-co-servant/blob/main/.github/workflows/build-push-docker.yml) to dockerhub on a new git tag. 
+
+When a new build is ready, we can deploy it by updating the version on the server and rolling the Docker container.

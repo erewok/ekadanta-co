@@ -1,0 +1,207 @@
+---
+pubdate: 2014-10-01
+lede: A taco shop name generator is an obvious first-program to write in Haskell.
+published: True
+title: Taco Shop Name Generator
+pid: 293f4128-256e-4889-a6f4-2d17ea93cf10
+contentEncoding: ContentMarkdown
+resourceType: Project
+featuredImage: /images/milo_and_daddy_wave_cup.jpg
+tags: ['haskell']
+---
+
+It took me almost four years of practicing Haskell at home to be able to write moderately complex programs in the language. I'm not sure if that amount of time is representative (at least *I hope it isn't*) but it did feel painfully slow and endlessly confusing. Today, however, I'd like to take a look at one of the first programs I wrote in the language, a taco shop name generator.
+
+## But Why
+
+San Diego has a plethora of taco shops representing a diverse range of burritos and hot sauces, but the creative names they use is something I enjoy. Most famous locally is *Roberto's* but there's also *Fredberto's* and *Philiberto's* and even *Tacobertos*. These don't sound like real names, so one day I was wondering how they come up with all of these names and that's when it hit me: they must use a program.
+
+### Writing Our Own Taco Shop Name Generator
+
+My first idea for writing this program was to randomly pick a vowel or consonant, and then build up a word from these random choices. I started like this:
+
+```haskell
+import System.Random
+import Control.Monad.State.Lazy
+
+all_let :: [Char]
+all_let = ['a'..'z']
+
+vowels :: [Char]
+vowels = "aeiouy"
+
+consonants :: [Char]
+consonants = [x | x <- all_let, not $ x `elem` vowels]
+```
+
+### Pulling Random Things from Lists
+
+One of the things I appreciate about Haskell (and why I stuck with it in my "beginner" state for so many years) is that it always forces me to look at things differently. For instance, pre-Haskell, it didn't occur to me to wonder how a programming language, with its deterministic mechanisms, could possibly produce *random* numbers. This is because I was used to languages like Python and Javascript, where if you need a random number, you just *ask* for one.
+
+In my first, early experiences with Haskell, by contrast, I remember thinking, "Why would I need IO to produce a random number?"
+
+```haskell
+getRandChar' :: [Char] -> IO Char
+getRandChar' xs = do
+  x <- getStdRandom $ randomR (0, (length xs - 1))
+  return (xs !! x)
+
+makeRandWord :: [Int] -> IO [Char]
+makeRandWord ns = sequence [if n == 0 then getRandChar' vowels else getRandChar' consonants | n <- ns]
+```
+
+My strategy here was to select a random character from a list of characters, but to toggle between `vowels` and `consonants` depending on the input list `ns`, which was a series of 0 and 1 values.
+
+### Putting It Together with `LiftM2`
+
+Here's how I wrapped up this program, by taking an input parameter using `getLine` with argument that expects an `Int`, which represents how long our output taco shop name should be.
+
+```haskell
+buildVals :: Int -> [Int]
+buildVals 0 = 1 : buildVals 1
+buildVals 1 = 0 : buildVals 0
+
+main = do
+  putStrLn "enter total length of taco shop name"
+  total_length <- getLine
+  let total = (read total_length :: Int) - 6
+  g <- getStdGen
+  let first = fst $ randomR (0, 1) g
+  let randomizer = take total $ buildVals first
+  let newWord = makeRandWord randomizer
+  newName <- liftM2 (++) newWord ((return "bertos") :: IO [Char])
+  -- Alternate (simpler):
+  -- fmap (++"bertos") newName
+  putStrLn (show newName)
+```
+
+I know that I struggled writing this early program, in part because I can see some confusion about monadic values in my `main` function (`let newWord = makeRandWord randomizer` plus `liftM2` on the next line...), not to mention the fact that I haven't used `liftM2` since then. 
+
+### Redoing It
+
+If I were reworking this program today and not changing the logic, I'd probably swap the use of `Int`s which are only ever 0 and 1 for `Bool`, which only has two possible values: `True` and `False`. `Int` represents *way too many states* for what I'd really like to express here.
+
+In addition, in Haskell `String` is a type synonym for `[char]`, which is typically a linked-list of UTF-16 codepoints. As such, it's notoriously inefficient, so most Haskell programmers beyond the beginner stage utilize one or both of two well-known and much more performant libraries: `text` and `bytestring`.
+
+Still, for this program, where we're dealing with short strings constructed once and built once, I'd probably stick with `String`.
+
+What I'd really like to do, though, is make sure the caller is really passing in an `Int` for an argument *and* I'd like to make sure that value is of a reasonable size, let's say something less than `maxBound`, for instance (where overflow will *probably* return a negative number):
+
+```haskell
+-- on my machine, `maxBound` comes out to this value:
+-- maxBound :: Int
+-- 9223372036854775807
+import System.Exit -- this line has been added
+
+printTacoShopName :: Int -> IO ()
+printTacoShopName total = do
+    g <- getStdGen
+    let first = fst $ randomR (False, True) g
+        randomizer = take total $ buildVals first
+    newWord <- makeRandWord randomizer
+    print $ newWord ++ "bertos"
+
+main :: IO ()
+main = do
+  putStrLn "enter total length of taco shop name"
+  total_length <- getLine
+  let total = (read total_length :: Int) - 6
+      maxI = maxBound :: Int
+  if total >= maxI || total <= 0
+    then die $ "Please pass in a number between 0 and " ++ show maxI
+    else printTacoShopName total
+``` 
+
+I'd probably also use something like `optparse-applicative` even for this simple, single-argument program, because it'll handle dynamic input for me. 
+
+### Rewritten and Running
+
+At any rate, my hastily rewritten version, would probably look something like this:
+
+```haskell
+#!/usr/bin/env stack
+--stack --resolver lts-12.24 runghc --package random
+
+-- run to find out your taco shop name
+import System.Exit
+import System.Random
+
+allLet :: String
+allLet = ['a'..'z']
+
+vowels :: String
+vowels = "aeiouy"
+
+consonants :: String
+consonants = [x | x <- allLet, x `notElem` vowels]
+
+getRandChar' :: String -> IO Char
+getRandChar' xs = do
+  x <- getStdRandom $ randomR (0, length xs - 1)
+  return (xs !! x)
+
+buildVals :: Bool -> [Bool]
+buildVals False = True : buildVals True
+buildVals True = False : buildVals False
+
+makeRandWord :: [Bool] -> IO String
+makeRandWord ns = sequence [if n then getRandChar' vowels else getRandChar' consonants | n <- ns]
+
+printTacoShopName :: Int -> IO ()
+printTacoShopName total = do
+    g <- getStdGen
+    let first = fst $ randomR (False, True) g
+        randomizer = take total $ buildVals first
+    newWord <- makeRandWord randomizer
+    print $ newWord ++ "bertos"
+
+
+main :: IO ()
+main = do
+  putStrLn "enter total length of taco shop name"
+  total_length <- getLine
+  let total = (read total_length :: Int) - 6
+        maxI = maxBound :: Int
+  if total >= maxI || total <= 0
+    then die $ "Please pass in a number between 0 and " ++ show maxI
+    else printTacoShopName total
+```
+
+And when I run it, it looks like this:
+
+```sh
+❯ stack taco_shop_name.hs
+12
+enter total length of taco shop name
+"papuvobertos"
+
+❯ stack taco_shop_name.hs
+enter total length of taco shop name
+123
+"ahyhoqizijeluhiwuzaqubopycegatabyxysojukopexutukejesyfahosazarelodypisoxesafalazecupuhajetelisuxukyjyhuwudodukuponohybertos"
+
+❯ stack taco_shop_name.hs
+enter total length of taco shop name
+912839128391829312983891923891
+Please pass in a number between 0 and 9223372036854775807
+```
+
+Unfortunately, though, it takes way too long if you do pass in a number in the neighborhood of `maxBound`:
+
+```sh
+❯ stack taco_shop_name.hs
+enter total length of taco shop name
+922337203685477580
+^C
+```
+
+Even one nowhere near `maxBound` takes so long that it has to be cancelled:
+
+```sh
+❯ stack taco_shop_name.hs
+enter total length of taco shop name
+92222372
+^C
+```
+
+Knowing that, how would I write this program today? If this is an application to be in production, I'd probably use bytestring and print each character as we select it instead of trying to construct a giant `String` value. This could be a fun exercise, but I'm going to leave it up to the reader to implement it!
