@@ -1,5 +1,6 @@
 import adapter from '@sveltejs/adapter-cloudflare';
 import { mdsvex } from 'mdsvex'
+import mdsvexConfig from './mdsvex.config.js';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -7,13 +8,11 @@ const config = {
 		// Using cloudflare pages
 		adapter: adapter()
 	},
-	extensions: ['.svelte', '.svx'],
+	extensions: ['.svelte', ...mdsvexConfig.extensions],
 
   	preprocess: [
-    	mdsvex({
-			extensions: [".svx"]
-		})
-  	]
+		mdsvex(mdsvexConfig)
+	]
 };
 
 export default config;

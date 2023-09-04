@@ -1,6 +1,6 @@
 <svelte:head>
 	<link rel="icon" href="/images/favicon.ico" />
-	<link rel="stylesheet" href="/highlight/styles/default.css" type="text/css" />
+	<link rel="stylesheet" href="/prism/prism.css" type="text/css" />
 </svelte:head>
 
 <script>
