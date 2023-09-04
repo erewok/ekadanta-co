@@ -10,6 +10,8 @@ featuredImage: /images/children_pool_sea_wall.jpg
 tags: ['Python']
 ---
 
+The other day at work someone asked me on Slack why their Python code was behaving in an odd way. I took a look and was completely wrong in my first response.
+
 The person who asked me this question had boiled it down to two interesting functions. Here's his first function, rendered into an iPython console:
 
 ```python
