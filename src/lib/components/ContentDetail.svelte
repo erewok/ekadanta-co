@@ -15,7 +15,7 @@
         <Heading class="pyt-12 pyb-4" tag="h1" customSize="text-3xl">{title}</Heading>
         <span class="font-semibold title-font text-gray-500">{date}</span>
     </div>
-    <Img class="rounded-lg object-cover mx-auto" alt="{imageAlt}"  size="max-w-xl" src="{featuredImage}" />
+    <Img class="w-full rounded-lg object-cover mx-auto" alt="{imageAlt}"  size="max-w-xl" src="{featuredImage}" />
 	
     {@html content}
 

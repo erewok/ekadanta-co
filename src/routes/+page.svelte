@@ -3,7 +3,7 @@
 </script>
 
 <section>
-	<Img class="object-cover rounded-lg"  alt="Surfing on a wave" alignment="mx-auto" size="max-w-xl" src="/images/erik-surf-seafoam-color.jpeg" />
+	<Img class="object-cover rounded-lg w-full"  alt="Surfing on a wave" alignment="mx-auto" size="max-w-xl" src="/images/erik-surf-seafoam-color.jpeg" />
 	<Heading class="pt-8 px-8" tag="h1" customSize="text-3xl">👋 Hi, I'm Erik.</Heading>
 	<P class="pt-8 px-8">
 		I'm a software developer in San Diego, California, working in Python, Rust, and Kubernetes. My
