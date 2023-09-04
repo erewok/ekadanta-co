@@ -32,13 +32,13 @@ For my money, though, the hardest part of frontend web development has always be
 
 I'd kind of resigned myself to never doing any frontend again, in fact, but Sveltekit has won me over. Its [routing by directory structure](https://learn.svelte.dev/tutorial/pages) makes a ton of sense to me and I also tend to think routing is a __core__ problem for a frontend application which should be solved upfront.
 
-Honestly, the design of Sveltekit was a little bit outside of my comfort zone because I'm used to building a separate backend for an SPA, but Sveltekit is sort of _both_ using server-side-rendering. This aspect of it took me a bit more to get comfortable with: but ultimately, I found that it was fine. If needed, I could use the `+page.server.js` files to issue calls to _another_ backend.
+Beyond routing and state-management, though, the design of Sveltekit with its heavy emphasis on service-side-rendeirng was a little bit outside of my comfort zone because I'm used to building a separate backend for an SPA. This aspect of it took me a bit more to get comfortable with: but ultimately, I found that it was fine. If needed, I could use the `+page.server.js` files to issue calls to _another_ backend.
 
 ## Deploying to Cloudflare Pages
 
-Deploying this app is the most amazing to me: my goal was to get to a static site where I could write markdown and have it automatically deployed. Further, I knew that going from running my site on a server to running it statically on Cloudflare's edge workers would be a massive improvement (especially for a site with a few dozen pages which gets fewer visitors than that in a year!).
+Moving on, deploying this app is the most amazing to me: my goal had been to get to a static site where I could write markdown and have it automatically deployed. Further, I knew that going from running my site on a virtual machine to running it statically on Cloudflare's edge workers would be a massive improvement (especially for a site with a few dozen pages which gets fewer visitors than that in a year!).
 
-To get this working, I followed [this guide](https://kit.svelte.dev/docs/adapter-cloudflare-workers) and had this app deploying to Cloudflare Pages from `main` in maybe __five minutes__!
+To get my deployment working, I followed [this guide](https://kit.svelte.dev/docs/adapter-cloudflare-workers) and had this app deploying to Cloudflare Pages from `main` in maybe __five minutes__!
 
 I had actually expected to spend a couple hours building a deployment pipeline, but instead I just created an app inside Cloudflare, connected it to my Github repo, and clicked through a couple of screens of options. I was stunned how easy it was.
 
@@ -46,11 +46,11 @@ I had actually expected to spend a couple hours building a deployment pipeline, 
 
 Finally, I decided to rely on [tailwindcss](https://tailwindcss.com/docs/typography-plugin) and [Flowbite-svelte](https://flowbite-svelte.com/) to make something generic-looking with as little styling effort as possible.
 
-It's been more than 10 years since I gave up on being a competent CSS practitioner but even so I can definitely understand and sympathize with the complaints experts may have about Tailwind and friends. Still, these tools are invaluable for me and they're as invaluable as CSS frameworks like Bootstrap were at one point. 
+It's been more than 10 years since I gave up on being a competent CSS practitioner but even so I can definitely understand and sympathize with the experts who may have reservations about Tailwind and friends. Still, these tools are invaluable for me and they're as invaluable as CSS frameworks like Bootstrap were at one point. 
 
 Of course, I am not an expert CSS-author and I am also pretty aesthetically hobbled, so even if I could fluently craft stylesheets, I don't think anyone would appreciate the styles I came up with! You can see that on this site as well: the design and presentation is "good enough" in my view (sorry  ¯\_(ツ)_/¯ ).
 
-This is all to say: I wanted to put in as little effort as possible on styling and Tailwind (which quite possibly could be a hassle to maintain on large apps) aided me incredibly this goal.
+This is all to say: I wanted to put in as little effort as possible on styling and Tailwind aided me incredibly this goal.
 
 ## Conclusion
 

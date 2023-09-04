@@ -3,11 +3,118 @@ contentEncoding: ContentMarkdown
 featuredImage: /images/children_pool_sea_wall.jpg
 lede: What a great way to be confronted by the limit of things you can hold in your brain at one time!
 pid: 532759f2-1525-4603-8cd1-8ec8b309eec5
-pubdate: 2000-01-01
-published: False
+pubdate: 2022-04-21
+published: True
 resourceType: BlogPost
 tags: ['Haskell, Raft, Distributed Systems']
 title: Raft!
 ---
 
-Raft!
+I first encountered the Raft consensus algorithm in 2017, at [a Papers We Love - San Diego presentation](https://www.youtube.com/watch?v=ATPtyGbmp34) by Chris Hiestand on the [paper](https://raft.github.io/raft.pdf). 
+
+In the years following the presentation, I'd found myself returning to the paper. Then, four years later in 2021, I took my printed copy of the Raft paper with its highlighted chunks and marginalia to [David Beazley's class on building Raft](https://dabeaz.com/raft.html). 
+
+I'd been compelled to take Beazley's class because the problem of Raft just continued to stick around in my brain (and fortunately my employer offered to send me!). For the class, we implemented Raft in whatever language we preferred after first solving some smaller distributed systems problems (a traffic light system and one other one which I vaguely remember may have been a key-value store...). 
+
+Now, let me be the first tell you: __building Raft in a week based on the paper is difficult__. Still, by the end of the week I had [a basic repository in Python](https://github.com/erewok/raft-py) with a pretty basic implementation using threads, clocks, and queues. There was no persistence in my implementation, but the core components were present and it was possible to imagine how to extend my basic project to gain persistence (writing to and reading from disk, for instance).
+
+## Why This Problem
+
+After the class I found that I wanted to keep hacking on it, to keep chewing on the problem, and I ended up hacking on my Raft implementation for about half a year more. First I added an async runtime, thinking that maybe some of my Raft difficulties were actually difficulties managing threads-and-queues. My async version _did_ seem simpler. Outside of my Python implementation, I even toyed with a side project in Haskell to see if I could use compile-time guarantees to make a Raft that was easier for me to reason about. Dear reader, I even came pretty close to using __GADTS__ in my Haskell implementation, but I talked myself off the hobby-software-project ledge there.
+
+Eventually, work on my Raft implementations dried up in a manner akin to what always happens with my open source toys: I moved on to some new shiny thing. But Raft continues to live in my brain rent-free! And I'm not alone: just look at all of these projects based on Raft:
+
+- [Kraft: Apache Kafka without zookeeper](https://developer.confluent.io/learn/kraft/)
+- [openraft](https://github.com/datafuselabs/openraft)
+- [Tikv](https://github.com/tikv/tikv)
+- [Redpanda](https://redpanda.com/)
+- [Hazelcast](https://hazelcast.com/)
+- [CockroachDB](https://www.cockroachlabs.com/product/)
+
+I don't know what it is about Raft that keeps drawing me back, but I think it's a good example of the core attribute of distributed systems that I find compelling: these problems _seem_ like they should be _solvable_ but they quickly overrun the capacity of the human mind to hold all the aspects of the problem in one's head at the same time. 
+
+In other words, these problems seem straightforward but actually implementing them is bedeviling. You start your software-implementation truck and then discover you've run right into an invisible brick wall made out of time and failing networks and no guarentees about anything.
+
+## Raft Aspects: Leader Election and Storage Consistency
+
+As I recall, there are the two primary components of Raft and in hindsight it's surprising what _seems_ hard contrasted with what I found to be _actually_ hard:
+
+1. Leadership Election
+1. Storage Consistency
+
+### Surprsingly _Not_ the Hardest Part: Leader Election
+
+As a consensus algorithm, the problem Raft solves is achieving consistent data between different nodes in a distributed system. To achieve consensus, Raft relies on a single leader node (the Raft paper calls nodes "Servers"), and this leader will determine which data has been successfully added to the cluster. 
+
+In order to reliably _have_ a __single__ leader in the cluster, Raft has a novel solution for electing leaders. When I read the Raft paper and attended the presentation, I was most taken in by this aspect: Raft's leader election sounds creative, interesting, and potentially tricky to work through, so I'll try to give a brief description of it below.
+
+First, Raft has three different types of participants in a cluster: Leaders, Candidates, and Followers. Followers receive and process messages from Leaders, but there will be only one leader at a time. Each message has an internal clock, like a version number, and if any node _thinks_ it's a Leader but it receives a later version-numbered message than it knows about, it immediately converts itself into a Follower and starts listening to the Leader that sent the message.
+
+Further, Leaders will send out empty messages as a kind of heartbeat in order to maintain their leadership. For a Follower, receiving one of these messages acts as confirmation that the Leader is still alive and still processing messages. What do these nodes do when the Leader goes quiet, however?
+
+That situation is covered by Candidates. Each node has an internal clock and an attribute called the "election timeout" which is a value randomly chosen from a starting configuration. If no messages have been received in this randomly selected interval, then the Follower declares itself a Candidate and emits request-for-vote messages to all other nodes in the cluster.
+
+There's [a great visualization of this process](https://raft.github.io/) over on [raft.github.io](https://raft.github.io/) that does it much greater justice than I can in my basic description here and I encourage anyone following along to check that out.
+
+In truth, I'm glossing over a bit here, in order to get to this point: when I read the paper and thought most about building Raft, I _thought_ leadership election would the most dense and error-prone of my implementation, and I was surprised when it wasn't.
+
+__Note__: I don't mean to imply here that implementing Raft's leader election algorithm is _easy_ and there are certainly some tricky details to getting this right, which is why, for example, etcd has [a non-voting "Learner" role](https://etcd.io/docs/v3.3/learning/learner/) in their version of Raft.
+
+### Probably the Hardest Part: Storage Consistency
+
+The hardest part for me in implementing the paper was in trying to actually _pin down_ the consistent data parts. For example, there's an "append entries" RPC described in the Raft paper and when a Raft "server" accepts one of these messages, it must perform some logic to update its internal state and potentially advance its "commit index". 
+
+Here's [my](https://github.com/erewok/raft-py/blob/4c43348a7c30ecbc0a7c924614ed7ebd54961bce/raft/models/server.py#L255C1-L284C58) `Follower` class with its `handle_append_entries_message` method:
+
+```python    
+def handle_append_entries_message(self, event: Event) -> ResponsesEvents:
+    # An RPC sent by leader to replicate log entries (see Raft §5.3)
+    # If entries is an empty list, this is meant to be a heartbeat (see Raft §5.2).
+    logger.info(
+        f"{self._log_name} Received new append entries request with {len(event.msg.entries)} entries"
+    )
+    success = self.log.append_entries(  # type: ignore
+        prev_term=event.msg.prev_log_term,
+        prev_index=event.msg.prev_log_index,
+        entries=event.msg.entries,
+    )
+    self.voted_for = None  # This looks like a great place for bugs
+    if success:
+        # We have a leader if we have received this event
+        self.known_leader_node_id = event.msg.leader_id  # type: ignore
+        # LEader sends commit index: try to advance ours
+        new_commit_index = min(event.msg.leader_commit_index, len(self.log))
+        if new_commit_index > self.commit_index:
+            self.commit_index = new_commit_index
+            logger.info(
+                f"{self._log_name} Committed entries count is now {self.commit_index}"
+            )
+
+            if self.commit_index > self.last_applied:
+                entries = self.log.log[
+                    self.last_applied + 1 : self.commit_index + 1
+                ]
+                self.applied.extend(entries)
+                logger.info(f"{self._log_name} AppliedEntries={entries}")
+                self.last_applied = self.commit_index
+```
+
+We have a lot of state to keep consistent in our minds to be able to understand this code:
+
+- a "commit index"
+- a "last applied index"
+- the "log" (the real data store Raft is concerned with)
+- the entries from our "log" that have been "applied"
+
+The shortest explanation for what this code is attempting to do (and I offer it more as an example of an _attempt_ than as a fully-thought-out _solution_ to Raft) is as follows:
+
+- The Raft node needs to make sure it has all the log entries the Leader knows about
+- The Raft node must also know what entry is the _latest_ entry "committed" to the cluster.
+
+Again, this is a great example of trying to keep a lot of information straight in our heads when we're working on distributed systems.
+
+## The Devil Is in the Details
+
+Building a software project based on a paper can sometimes feel like a ["Draw the rest of the fucking owl!"](https://knowyourmeme.com/memes/how-to-draw-an-owl) exercise.
+
+My goal in commenting on Raft here is not to present my half-working hobby projects as complete implementations. Instead, I'm interested in the ways that problems like Raft are alluring: they look solvable, but they're pretty hard nuts to crack. They're good mountains to climb, in other words, and to keep climbing even after you've summitted: they never stop being hard and they never stop being compelling.
