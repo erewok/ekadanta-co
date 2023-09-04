@@ -10,7 +10,7 @@
 </script>
 
 
-<article class="prose lg:prose-xl">
+<article class="mx-auto prose lg:prose-xl">
     <div class="flex-shrink-0 flex flex-col">
         <Heading class="pyt-12 pyb-4" tag="h1" customSize="text-3xl">{title}</Heading>
         <span class="font-semibold title-font text-gray-500">{date}</span>
