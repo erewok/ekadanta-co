@@ -26,10 +26,5 @@
 		<NavLi href="/podcast">Podcast</NavLi>
 		<NavLi href="/posts">Blog</NavLi>
 		<NavLi href="/projects">Projects</NavLi>
-		<NavLi>
-			<div>
-				<DarkMode btnClass={darkmodebtn} />
-			</div>
-		</NavLi>
 	</NavUl>
 </Navbar>

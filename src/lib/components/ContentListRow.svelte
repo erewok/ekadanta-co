@@ -12,7 +12,7 @@
     <div class="-my-8 divide-y-2 divide-gray-100">
         <div class="py-8 flex flex-wrap md:flex-nowrap">
         <div class="md:w-64 md:mb-0 mb-6 flex-shrink-0 flex flex-col">
-            <Img class="rounded-lg object-cover h-36 w-48 mx-auto" alt="Surfing on a wave"  size="max-w-xs max-h-xs" src="{metadata.featuredImage}" />
+            <Img class="rounded-lg object-cover h-48 w-56 mx-auto" alt="Surfing on a wave"  size="max-w-xs max-h-xs" src="{metadata.featuredImage}" />
             <span class="font-semibold title-font text-gray-700 mx-auto">{date}</span>
             <span class="mt-1 text-gray-500 text-sm  mx-auto">{metadata.tags}</span>
         </div>
