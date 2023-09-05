@@ -83,7 +83,7 @@ There's a notable absence here and it was not intentional: Stack Overflow. In co
 
 This added another dimension to my "Do I want to use this open source library?" question: do I _understand the code_? Do I like how it's been written? Do I trust the the maintainers of this library to continue developing it purposefully?
 
-Now, I'm not saying here that before you add a dependency to your project, you have to read the whole whole library and understand it enough to reimplement it. However, I personally feel a lot more comfortable using libraries that I find easy to navigate and understand. When I get to my inevitable usage or customization questions, I would like to satisfy my questions by reading the code. I also want to know the code is written with maintainability and adaptability in mind. 
+Now, I'm not saying here that before you add a dependency to your project, you have to read the whole library and understand it enough to reimplement it. However, I personally feel a lot more comfortable using libraries that I find easy to navigate and understand. When I get to my inevitable usage or customization questions, I would like to satisfy my questions by reading the code. I also want to know the code is written with maintainability and adaptability in mind. 
 
 This is a point related to my impulse away from the Django ORM above: does the library enable me to write readable code myself? Is the library understandable? Does it make sense?
 
@@ -294,4 +294,4 @@ I believe a lot of open source project popularity is based on _convenience_. If 
 
 The question in my mind is always: what's the cost of this convenience? If you make certain things convenient for me, which of your library's opinions will I be owning? If you make things convenient, how readable is the code I'll be writing when I take advantage of those conveniences? In the case of the Django ORM and SQLAlchemy, I preferred the code I wrote with the latter. In the case of FastAPI's `OAuth2PasswordBearer`, I find the Starlette example to be a lot clearer to understand and I don't think writing a function or custom middleware to parse request headers is onerous.
 
-Overall, when it comes to FastAPI, I don't care for most of its opinions and I don't find the conveniences it offers particularly helpful. That's why I don't plan to use it.
+Overall, when it comes to FastAPI, I don't want to opt-in to _its_ opinions and I don't find the conveniences it offers particularly helpful. That's why I don't plan to use it.
