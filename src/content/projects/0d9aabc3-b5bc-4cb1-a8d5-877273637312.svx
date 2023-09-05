@@ -10,7 +10,7 @@ tags: ['Sveltekit', 'Cloudflare', 'mdsvex', 'tailwindcss']
 title: New Ekadanta.co with Sveltekit, mdsvex, Tailwind, Cloudflare Pages
 ---
 
-This week I built and released a new version of this website deployed as a set of static pages using [Sveltekit](https://kit.svelte.dev/). (If interested, the source code is on [Github](https://github.com/erewok/ekadanta-co).)
+This week I built and released a new version of this website deployed as a set of static pages using [Sveltekit](https://kit.svelte.dev/). The source code for this project is on [Github](https://github.com/erewok/ekadanta-co).
 
 The [old version of this site](https://erikaker.com/projects/c67eccd2-6ddc-4657-b592-c7fb16626e6f) was built in Haskell using the [Servant web framework](https://www.servant.dev/) and Elasticsearch as a data store.
 

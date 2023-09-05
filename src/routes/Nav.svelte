@@ -23,8 +23,8 @@
 	<NavHamburger on:click={toggle} />
 	<NavUl {hidden}>
 		<NavLi href="/" active={true}>Home</NavLi>
-		<NavLi href="/podcast">Podcast</NavLi>
 		<NavLi href="/posts">Blog</NavLi>
 		<NavLi href="/projects">Projects</NavLi>
+		<NavLi href="/podcast">Podcast</NavLi>
 	</NavUl>
 </Navbar>
