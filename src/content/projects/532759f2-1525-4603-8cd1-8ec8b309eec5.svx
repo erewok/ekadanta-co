@@ -71,7 +71,8 @@ In short, the following transitions are allowed:
 
 - Follower -> Candidate
 - Candidate -> Follower
-- Candidate -> Candidate (begin a new election with no Leader elected in the last one)
+- Candidate -> Candidate (if no Leader elected in last election)
+- Candidate -> Leader
 - Leader -> Follower
 
 And that's it!
