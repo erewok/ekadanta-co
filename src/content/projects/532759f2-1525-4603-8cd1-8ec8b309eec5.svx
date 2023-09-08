@@ -57,7 +57,7 @@ That situation is covered by Candidates. Each node has an internal clock and an 
 
 The paper shows the states and state transitions a node can see in a useful diagram:
 
-![](/images/raft-node-states.png)
+![Diagram showing state transitions for Raft nodes](/images/raft-node-states.png "raft-node-states.png")
 
 There's also [a great visualization of the leader election process](https://raft.github.io/) over on [raft.github.io](https://raft.github.io/) that does it much greater justice than I can in my basic description here and I encourage anyone following along to check that out.
 
@@ -134,7 +134,7 @@ The shortest explanation for what this code is attempting to do (and I offer it 
 
 Now, this may sound straightforward, but the key thing about distributed systems is that they can __fail in interesting ways__. Consider the following diagram from the Raft paper on scenarios a newly elected leader may encounter:
 
-![](/images/raft-scenarios.png)
+![Diagram showing log applied and committed scenarios for hypothetical Raft cluster](/images/raft-scenarios.png "raft-scenarios.png")
 
 The goal for Raft is _consistency_ and it works to achieve this goal _even though servers may go offline_. These different failure modes are a great example of trying to keep a lot of information straight in our heads when we're working on distributed systems.
 
