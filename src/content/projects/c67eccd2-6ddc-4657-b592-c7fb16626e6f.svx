@@ -1,6 +1,7 @@
 ---
 contentEncoding: ContentMarkdown
 featuredImage: /images/typermed.jpg
+imageAlt: "An old typewriter"
 lede: It's perhaps old school to render HTML via a backend server, but these HTML-rendering functions are simple and clean and it's fast enough for our purposes.
 pid: c67eccd2-6ddc-4657-b592-c7fb16626e6f
 pubdate: 2019-06-26

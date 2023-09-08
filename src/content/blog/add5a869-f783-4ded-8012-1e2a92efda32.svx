@@ -1,12 +1,13 @@
 ---
 contentEncoding: ContentMarkdown
 featuredImage: /images/milo_and_daddy_wave_cup.jpg
+imageAlt: "A mug with a child's drawing on it"
 lede: It's weird when half a dozen people are looking at the diff saying "All we did was add Open Telemetry! We've added it to over a dozen projects now!"
 pid: add5a869-f783-4ded-8012-1e2a92efda32
 pubdate: 2023-06-25
 published: True
 resourceType: BlogPost
-tags: ['Python, Celery, Opentelemetry, Sqlalchemy']
+tags: ['python', 'Opentelemetry', 'Sqlalchemy']
 title: Oh no opentelemetry! Memory leaks in instrumenting Sqlalchemy
 ---
 

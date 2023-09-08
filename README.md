@@ -19,3 +19,5 @@ This will launch a browser window and open the project on [localhost:3000](http:
 
 
 ## Deployment
+
+This site is deployed on Cloudflare pages: pushing a commit to `main` will automatically deploy a new version of the site to production.

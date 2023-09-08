@@ -34,8 +34,8 @@ export async function contentList(contentType) {
 		Object.keys(mdModules).map(async (path) => {
 			const { metadata } = await mdModules[path]();
 			if (metadata) {
-				const { title, pubdate, lede, published, pid, contentEncoding, resourceType, featuredImage, tags } = metadata;
-				return { title, pubdate, lede, published, pid, contentEncoding, resourceType, featuredImage, tags  };
+				const { title, pubdate, lede, published, pid, contentEncoding, resourceType, featuredImage, tags, imageAlt } = metadata;
+				return { title, pubdate, lede, published, pid, contentEncoding, resourceType, featuredImage, tags, imageAlt  };
 			}
 		})
 	);

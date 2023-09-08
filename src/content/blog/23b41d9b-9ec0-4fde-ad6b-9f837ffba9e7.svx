@@ -7,7 +7,8 @@ pid: 23b41d9b-9ec0-4fde-ad6b-9f837ffba9e7
 contentEncoding: ContentMarkdown
 resourceType: BlogPost
 featuredImage: /images/beach_day.jpg
-tags: ['python']
+imageAlt: "A child playing on the beach"
+tags: ['python', 'http']
 ---
 
 Over the past few months at work, we've been writing small Python-based web services that are deployed onto Kubernetes clusters. In light of this, we've started to see some advantages to writing services with leaner profiles where we can dedicate fewer resources (CPU and memory) and still end up with a low-latency result. While some might read this and suggest instead that we should switch to other languages (such as Go), we still have a lot of people on our team comfortable with Python, and there are advantages to continuing to deploy services that the whole team is comfortable owning. To this end, we've started using a newer generation of Python web frameworks based on the ASGI spec and we've been pleased with the results.

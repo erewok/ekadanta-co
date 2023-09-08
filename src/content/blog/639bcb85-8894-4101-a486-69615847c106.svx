@@ -1,12 +1,13 @@
 ---
 contentEncoding: ContentMarkdown
 featuredImage: /images/old_site_imgs/10fwy_and_110fwy.jpg
+imageAlt: "Los Angeles freeways 10 and 110"
 lede: "I believe a lot of open source project popularity is based on convenience. If libraries make certain actions convenient then developers will often overlook the effort to customize behaviors from the library."
 pid: 639bcb85-8894-4101-a486-69615847c106
 pubdate: 2023-08-12
 published: True
 resourceType: BlogPost
-tags: ['python, fastapi, starlette']
+tags: ['python', 'fastapi', 'starlette']
 title: "What Cost Convenience: FastAPI and the Responsibility for Others' Opinions"
 ---
 

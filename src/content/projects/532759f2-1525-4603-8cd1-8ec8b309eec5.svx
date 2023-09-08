@@ -1,12 +1,13 @@
 ---
 contentEncoding: ContentMarkdown
 featuredImage: /images/children_pool_sea_wall.jpg
+imageAlt: "Children's pool seawall in La Jolla"
 lede: What a great way to be confronted by the limit of things you can hold in your brain at one time!
 pid: 532759f2-1525-4603-8cd1-8ec8b309eec5
 pubdate: 2022-04-21
 published: True
 resourceType: BlogPost
-tags: ['Haskell, Raft, Distributed Systems']
+tags: ['Raft', 'Distributed Systems']
 title: Raft!
 ---
 
@@ -143,4 +144,4 @@ Building a software project based on a paper can sometimes feel like a ["Draw th
 
 My goal in commenting on Raft here is not to present my half-working hobby projects as complete implementations. Instead, I'm interested in the ways that problems like Raft are alluring: they look solvable, but they're pretty hard nuts to crack. They can fail in such interesting ways and anticipating those failures and preventing them or working around them can be a hugely frustrating exercise.
 
-In other words, projects like Raft good mountains to climb and to keep climbing even after you've summitted: they never stop being hard and thus they never stop being compelling.
+In other words, projects like Raft are attractive mountains to climb and to keep climbing even after you've summitted: they never stop being hard and thus they never stop being compelling. [They're always there](https://en.wikiquote.org/wiki/George_Mallory).

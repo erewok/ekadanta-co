@@ -2,6 +2,7 @@
 contentEncoding: ContentMarkdown
 resourceType: Project
 featuredImage: /images/erik_and_desert_serpent.jpg
+imageAlt: "Picture of the author with a metal dragon sculpture in the desert"
 lede: It can be loads of fun building stuff in your spare time, but sometimes after a few years trying to keep it maintained I start to groan.
 pid: 0d9aabc3-b5bc-4cb1-a8d5-877273637312
 pubdate: 2023-09-04

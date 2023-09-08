@@ -7,6 +7,7 @@ pid: 0964a03d-c83f-4cf6-9fa8-00b5ef80f743
 contentEncoding: ContentMarkdown
 resourceType: Project
 featuredImage: /images/old_site_imgs/10fwy_and_110fwy.jpg
+imageAlt: "Los Angeles freeways 10 and 110"
 tags: ['haskell']
 ---
 

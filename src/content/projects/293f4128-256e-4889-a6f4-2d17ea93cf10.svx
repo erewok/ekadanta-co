@@ -7,6 +7,7 @@ pid: 293f4128-256e-4889-a6f4-2d17ea93cf10
 contentEncoding: ContentMarkdown
 resourceType: Project
 featuredImage: /images/milo_and_daddy_wave_cup.jpg
+imageAlt: "A mug with a child's drawing on it"
 tags: ['haskell']
 ---
 

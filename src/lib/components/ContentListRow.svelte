@@ -3,6 +3,8 @@
 	export let metadata;
 
     import {Img} from 'flowbite-svelte';
+    import TagList from './TagList.svelte';
+    const tags = metadata.tags;
 
     const date = (new Date(metadata.pubdate)).toLocaleDateString();
 </script>
@@ -12,9 +14,9 @@
     <div class="-my-8 divide-y-2 divide-gray-100">
         <div class="py-8 flex flex-wrap md:flex-nowrap">
         <div class="md:w-64 lg:w-80 md:mb-0 mb-6 flex-shrink-0 flex flex-col">
-            <Img class="rounded-lg object-cover w-40 md:w-48 lg:w-56 mx-auto" alt="Surfing on a wave"  size="max-w-xs max-h-xs" src="{metadata.featuredImage}" />
+            <Img class="rounded-lg object-cover w-40 md:w-48 lg:w-56 mx-auto" alt="{metadata.imageAlt}" size="max-w-xs max-h-xs" src="{metadata.featuredImage}" />
             <span class="font-semibold title-font text-gray-700 mx-auto">{date}</span>
-            <span class="mt-1 text-gray-500 text-sm  mx-auto">{metadata.tags}</span>
+            <TagList {tags} />
         </div>
         <div class="md:flex-grow">
             <h2 class="text-2xl font-medium text-gray-900 title-font mb-2">{metadata.title}</h2>
