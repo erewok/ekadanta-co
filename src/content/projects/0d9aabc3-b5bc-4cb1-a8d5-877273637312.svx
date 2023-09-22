@@ -13,29 +13,27 @@ title: New Ekadanta.co with Sveltekit, mdsvex, Tailwind, Cloudflare Pages
 
 This week I built and released a new version of this website (you can find the source code for this project on [Github](https://github.com/erewok/ekadanta-co)). 
 
-This site is now deployed as a set of static pages using [Sveltekit](https://kit.svelte.dev/) where as the [old version of this site](https://erikaker.com/projects/c67eccd2-6ddc-4657-b592-c7fb16626e6f) was built in Haskell using the [Servant web framework](https://www.servant.dev/) and Elasticsearch as a data store.
+While the [old version of this site](https://erikaker.com/projects/c67eccd2-6ddc-4657-b592-c7fb16626e6f) was built in Haskell using the [Servant web framework](https://www.servant.dev/) and Elasticsearch as a data store, this site is now deployed as a set of static pages using [Sveltekit](https://kit.svelte.dev/) 
 
-I __love__ Servant and the previous project was loads of fun to build and hack on over the years. In particular, I was pretty happy with how I'd used `servant-client` to automatically generate [a simple Elasticsearch client](https://github.com/erewok/ekadanta-co-servant/blob/main/src/Site/Search.hs), and for a simple database with amazing search functionality, Elasticsearch makes loads of sense.
+This is change is not a commentary on the old stack the site was built with. I __love__ Servant and the previous project was loads of fun to build and hack on over the years. In particular, I was pretty happy with how I'd used `servant-client` to automatically generate [a simple Elasticsearch client](https://github.com/erewok/ekadanta-co-servant/blob/main/src/Site/Search.hs), and for a simple database with amazing search functionality, Elasticsearch often makes a lot of sense.
 
-Deploying that project, however, also meant that I needed to have a server running and this ultimately meant keeping Elasticsearch running for years.
-
-If you're paying attention: running a stack like this for a website with fewer than 3 dozen _static_ pieces of content is overkill. The only reason to do it would be for fun (and maybe some street cred?) and I must admit to it being fun for a few years. There's a corollary here though: when this work stops being _fun_, then we should do something different.
+Deploying that project, however, also meant that I needed to have a server running and this ultimately meant keeping Elasticsearch running for years. Now, obviously, running a stack like this for a website with fewer than 3 dozen _static_ pieces of content is overkill. The only reason to do it would be for fun (and maybe some street cred?) and it was fun for a few years! There's a corollary here though: when this work stops being _fun_, then we should do something different.
 
 ## Sveltekit
 
-This summer I'd been playing with [Sveltekit](https://kit.svelte.dev/) and started to really like it. At the moment I am _not_ primarily a web developer, so I have the luxury of playing with web technologies in my spare time without worrying if there will be _jobs_ using them.
+This summer I'd started playing with [Sveltekit](https://kit.svelte.dev/) and eventually came to really like it. At the moment I am _not_ primarily a web developer, so I have the luxury of playing with web technologies in my spare time without worrying if there will be _jobs_ using them.
 
-Now, it goes without saying that the web frontend ecosystem is dominated by React, a fact which appears to cause much chagrin in the Svelte world. I was never won over by React (an admission that may alienate some of my readers...) and obviously, the industry has bought into it _hard_, so I am clearly in the wrong here. 
+It goes without saying that the web frontend ecosystem is dominated by React, a fact which appears to cause much chagrin in the Svelte world, but for my part I was fully never won over by React (an admission that may alienate some of my readers...). Clearly,the industry has bought into it _hard_, so I am in the wrong here. 
 
-For my money, though, the hardest part of frontend web development has always been _state management_ and the earliest versions of React punted on this question, so I guess I see the state problem the original sin of React, and the solutions which emerged over the years, such as React hooks, were never compelling to me. Ultimately, I never looked at the organization and design of React apps and thought, "Yes! I want to write apps like this!"
+By way of a small explanation for my gut reaction to React, I always felt that the hardest part of frontend web development is _state management_ and the earliest versions of React punted on this question, so I always saw the state problem as the original sin of React. Moreover, the solutions which emerged over the years, such as React hooks, were never compelling to me. In other words, I never looked at the organization and design of React apps and thought, "Yes! I want to write apps like this!"
 
-As a result, I'd kind of resigned myself to never doing any frontend again, so I was surprised when Sveltekit has won me over. State management for a particular component is solid and easy to understand but there ar e also React-hook-like _global_ state managment tools available as well (although I tend to think global state should be a _last_ resort and the emphasis on it for a "functional" frontend framework like React always puzzled me). Moreover, Svelte's [routing by directory structure](https://learn.svelte.dev/tutorial/pages) makes a ton of sense to me and in my view cleanly solves a problem which is another __core problem__ for a frontend application to solve upfront.
+As a result, I'd kind of resigned myself to never doing any frontend again, so I was honestly surprised to find Sveltekit compelling. State management in Svelte for a particular component is solid and easy to understand and there are also React-hook-like _global_ state managment tools available as well (although I tend to think global state should be a _last_ resort and the emphasis on it for a "functional" frontend framework like React always puzzled me). Moreover, Svelte's [routing by directory structure](https://learn.svelte.dev/tutorial/pages) made a lot sense to me and in my view cleanly solves a problem, routing, which is another __core problem__ for a frontend application to solve upfront.
 
-Beyond routing and state-management, though, the design of Sveltekit with its heavy emphasis on service-side-rendeirng was a little bit outside of my comfort zone because I'm used to building a separate backend for an SPA. In my head there is client-side (browser) and server-side (Rust!) and mashing the client-side to be also sort of server-side is confusing to me (and has faint echoes of Rails or Django for my ears). This server-side-rendered focus of Sveltekit took me a bit more to get comfortable with and I had to try to distinguish _where_ in my codebase was I doing "backend" things and where was I doing "frontend" things.
+Beyond routing and state-management, the design of Sveltekit with its heavy emphasis on service-side-rendeirng was a little bit outside of my comfort zone because I'm used to building a separate backend for an SPA. In my head there is client-side (browser) and server-side and mashing the client-side to be also sort of server-side is confusing to me (and has faint echoes of Rails or Django for my ears). This server-side-rendered focus of Sveltekit took me a bit to get comfortable with and I had to try to distinguish _where_ in my codebase was I doing "backend" things and where was I doing "frontend" things.
 
-This distinction is important to me because "backend" is the domain of talking-to-databases and other activities, and this typically includes _secret information_ such as database passwords, which I would never want to leak out onto the frontend. In other words, I am used to the backend/frontend separation as a hard security boundary and working with Sveltekit was uncomfortable for me in this way.
+That latter distinction is important because "backend" is the domain of talking-to-databases and other activities that typically include _secret information_ such as database passwords and API keys, etc. These are things I'd never want to leak out onto the frontend, so I'd grown used to the backend/frontend separation as a hard security boundary. Working with Sveltekit was uncomfortable for me in this way because the line was grayer than I'd been accustomed to.
 
-Ultimately, for this project I found that it was fine: there are no secret things in this project! Moreover, if needed, I could always call out to a separate backend using Sveltekit's `+page.server.js` files.
+Ultimately, in this project I found that it was fine: there are no secrets in this project! Moreover, if needed, I could always call out to a separate backend using Sveltekit's `+page.server.js` files.
 
 ## Deploying to Cloudflare Pages
 
@@ -43,15 +41,15 @@ Moving on, deploying this app turned out to be the greatest gift in using this s
 
 To get my deployment working, I followed [this guide](https://kit.svelte.dev/docs/adapter-cloudflare-workers) and had this app deploying to Cloudflare Pages from `main` in maybe __five minutes__!
 
-I had actually expected to spend a couple hours building a deployment pipeline, but instead I just created an app inside Cloudflare, connected it to my Github repo, and clicked through a couple of screens of options. I was stunned how easy it was.
+I had actually expected to spend a couple hours building a deployment pipeline, but instead I just created an app inside Cloudflare, connected it to my Github repo, and clicked through a couple of screens of options. It was shocking how easy this was.
 
-There are loads of ways to achieve the same goal so this isn't mean as an advertisement for Sveltekit and Cloudflare. I wanted to build this site using Sveltekit and in this particular area, I was surprised how easy it was to deploy it as a static set of pages on Cloudflare.
+Admittedly, there are loads of ways to achieve the same goal so this isn't meant as an advertisement for Sveltekit and Cloudflare. I wanted to build this site using Sveltekit and in this particular area, I was pleasantly surprised how easy it was to deploy it as a static set of pages on Cloudflare.
 
 ## Tailwind Is Fine for a Non-expert
 
 Finally, I decided to rely on [tailwindcss](https://tailwindcss.com/docs/typography-plugin) and [Flowbite-svelte](https://flowbite-svelte.com/) to make something generic-looking with as little styling effort as possible.
 
-It's been more than 10 years since I gave up on being a competent CSS practitioner but even as a hack I can still sympathize with the experts who may have reservations about Tailwind and friends. However, these tools are invaluable for me to get something clean-looking as fast as possible: they're as invaluable as CSS frameworks like Bootstrap were in the distant past. 
+It's been more than 10 years since I gave up on being a competent CSS practitioner but even as a hack I can still sympathize with the experts who may have reservations about Tailwind and friends. However, these tools are invaluable for me to get something clean-looking as fast as possible: they're as beneficial as CSS frameworks like Bootstrap were in the distant past. 
 
 Of course, I am not an expert CSS-author and I am also pretty aesthetically hobbled, so even if I could fluently craft stylesheets, I don't think anyone would appreciate the styles I came up with! You can see that on this site as well: the design and presentation is "good enough" in my view (sorry `¯\_(ツ)_/¯` ).
 
