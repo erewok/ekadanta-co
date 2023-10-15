@@ -13,7 +13,7 @@ tags: ['distributed systems', 'second systems']
 
 Fred Brooks in his book _Mythical Man-Month_ famously described a phenomenon he coined [the "Second System Effect"](https://en.wikipedia.org/wiki/Second-system_effect) (also called a "syndrome" for a more alliteratively memorable phrase). Brooks's work is famous partly for advancing ["Brook's Law"](https://en.wikipedia.org/wiki/Brooks%27s_law) where "Adding manpower to a late software project makes it later." 
 
-These two ideas are related. In his seminal 1975 work, Brooks argued that "second systems" are almost always bloated and overwrought because engineers seek to solve _all problems_ existing in the first system and this results in their "second system" taking on an unworkably large and overly ambitious set of features and traits. This is why Brooks was impelled to _add_ engineers to the superceding system he was working on at IBM, the failure of which ater became the inspiration for his book, where he observed the paradoxical effect that adding people to the late project made it _later_. Overall, though, second systems like this where engineers try to pack in features they left out of the first system are doomed to failure, Brooks argues, which is the phenomenon we now call "Second System Syndrome."
+These two ideas are related. In his seminal 1975 work, Brooks argued that "second systems" are almost always bloated and overwrought because engineers seek to solve _all problems_ existing in the first system and this results in their "second system" taking on an unworkably large and overly ambitious set of features and traits. This is why Brooks was impelled to _add_ engineers to the superceding system he was working on at IBM, the failure of which later became the inspiration for his book, where he observed the paradoxical effect that adding people to the late project made it _later_. Overall, though, second systems like this where engineers try to pack in features they left out of the first system are doomed to failure, Brooks argues, which is the phenomenon we now call "Second System Syndrome."
 
 I'm interested in second systems, in general, but not necessarily the "syndrome" Brooks identified. Obviously, technical organizations manage to throw away old systems and build new ones without committing the errors Brooks has identified. Nevertheless, second systems are _hard_, so it's worth asking why engineering organizations are compelled to do it?
 
@@ -38,9 +38,9 @@ Reading these and other posts about why an engineering team would tolerate the e
 
 Now, I've read a lot of treatises on second-systems-migrations over the years authored by large and capable software organizations. For instance in the example linked above, AWS famously migrated off of their Oracle databases to their own AWS services over a 4 year period. These types of migrations are unwieldy: they're so daunting that smaller organizations are often overwhelmed planning and implementing them and sometimes as a result they never do! 
 
-There's an armchair-quarterbacking thing that happens here when reading these articles about systems migrations. "If they only knew X or Y, they could have built this right from the start!" We can't know the future. Still,what if second systems could be avoided entirely?
+There's an armchair-quarterbacking thing that happens here when reading these articles about systems migrations. "If they only knew X or Y, they could have built this right from the start!" Of course, we can't know the future. Still, it's hard not to wonder: what if second systems could be _avoided entirely_?
 
-I'd like to consider the implications of this question. If second systems are _not_ inevitable, then it means it is possible to build something right from the beginning and use it virtually forever. Can we continually prune and improve existing systems with cost, maintainability, and performance in mind?
+I'd like to consider the implications of this question. If second systems are _not_ inevitable, then it means it should be possible to build something right from the beginning and use it virtually forever. Can we continually prune and improve existing systems with cost, maintainability, and performance in mind? 
 
 On the other hand, if second systems _are_ inevitable, then we should probably build systems so as to ease the pain of migrating to later systems as painless as possible: we should _commit_ less to a first system if we can.
 
@@ -49,9 +49,11 @@ Both of the above possibilities involve premonitions about the future:
 - Building a system that never needs to transition to a second system.
 - Building a system where migrating to a second system will be painless, low-friction.
 
+Another way to ask this: how long _should_ a successful software system last?
+
 ## What It Means for Builders if They Are
 
-On the other hand, if second systems _are_ inevitable, then it means that any successful first system is going to get thrown away eventually. How should I value, then, all of the effort and the cost involved in building and maintaining that first system? What would be good cost-benefit formula, something like: _value_derived_from_system_ - _cost_to_build_ - _cost_to_maintain_.
+If second systems _are_ inevitable, then it means that any successful first system is going to get thrown away eventually. How should I value, then, all of the effort and the cost involved in building and maintaining that first system? What would be good cost-benefit formula, something like: _value_derived_from_system_ - (_cost_to_build_ + _cost_to_maintain_).
 
 In practice, it seems like successful software systems often last between 5 and 10 years between replacement. This means that the IRS master file system is a fabulous success, having been running continuously since 1961!
 
