@@ -11,13 +11,19 @@ imageAlt: "Kern River on a bridge at Kennedy Meadows looking north"
 tags: ['distributed systems', 'second systems']
 ---
 
-Fred Brooks in his book _Mythical Man-Month_ famously described a phenomenon he coined [the "Second System Effect"](https://en.wikipedia.org/wiki/Second-system_effect) (also called a "syndrome" for a more alliteratively memorable phrase). Brooks's work is famous partly for advancing ["Brook's Law"](https://en.wikipedia.org/wiki/Brooks%27s_law) where "Adding manpower to a late software project makes it later." 
+Fred Brooks in his book _Mythical Man-Month_ famously described a phenomenon he coined [the "Second System Effect"](https://en.wikipedia.org/wiki/Second-system_effect) (also called a "syndrome" for a more alliteratively memorable phrase). Brooks's work is famous partly for advancing ["Brook's Law"](https://en.wikipedia.org/wiki/Brooks%27s_law) where "Adding manpower to a late software project makes it later."
 
 These two ideas are related. In his seminal 1975 work, Brooks argued that "second systems" are almost always bloated and overwrought because engineers seek to solve _all problems_ existing in the first system and this results in their "second system" taking on an unworkably large and overly ambitious set of features and traits. This is why Brooks was impelled to _add_ engineers to the superceding system he was working on at IBM, the failure of which later became the inspiration for his book, where he observed the paradoxical effect that adding people to the late project made it _later_. Overall, though, second systems like this where engineers try to pack in features they left out of the first system are doomed to failure, Brooks argues, which is the phenomenon we now call "Second System Syndrome."
 
 I'm interested in second systems, in general, but not necessarily the "syndrome" Brooks identified. Obviously, technical organizations manage to throw away old systems and build new ones without committing the errors Brooks has identified. Nevertheless, second systems are _hard_, so it's worth asking why engineering organizations are compelled to do it?
 
 Last week, we [talked about this topic on the podcast](https://www.picturemecoding.com/2222783/13716184-are-second-systems-inevitable) and my cohost Mike Mull argued that there's a form of entropy at work in successful software systems which means they have a lifespan: the more contributors over a long enough period of time, the more likely the system you have turns into something that is an unmaintainable mess. Thus, in his view there's an inevitability to second systems: any successful software system will be completely replaced at some point in the future.
+
+And to find someone who agrees with Mike's perspective, we need look no further than Leslie Lamport, who stated on a [recent podcast](https://changelog.com/podcast/552):
+
+> The world changes. If you build a program, and it’s really used a lot, you’re going to want to modify it at some point. And the real world is, you’re not going to go back and start from scratch and redo everything. You’re going to start patching it. And we’ve seen that happen, and as it goes on, that program gets harder and harder to deal with, harder and harder to modify... And eventually, either the code is going to be thrown away, or it’s going to be rewritten from scratch. You know entropy? That’s a law.
+
+So it turns out that Mike is probably onto something with this __entropy__ idea! Entropy is a force that works against "maintainability" (which is a form of _order_ for software systems).
 
 ## Why Do People Build Second Systems
 
@@ -36,11 +42,11 @@ Reading these and other posts about why an engineering team would tolerate the e
 
 ## Are Second Systems Inevitable
 
-Now, I've read a lot of treatises on second-systems-migrations over the years authored by large and capable software organizations. For instance in the example linked above, AWS famously migrated off of their Oracle databases to their own AWS services over a 4 year period. These types of migrations are unwieldy: they're so daunting that smaller organizations are often overwhelmed planning and implementing them and sometimes as a result they never do! 
+Now, I've read a lot of treatises on second-systems-migrations over the years authored by large and capable software organizations. For instance in the example linked above, AWS famously migrated off of their Oracle databases to their own AWS services over a 4 year period. These types of migrations are unwieldy: they're so daunting that smaller organizations are often overwhelmed planning and implementing them and sometimes as a result they never do!
 
 There's an armchair-quarterbacking thing that happens here when reading these articles about systems migrations. "If they only knew X or Y, they could have built this right from the start!" Of course, we can't know the future. Still, it's hard not to wonder: what if second systems could be _avoided entirely_?
 
-I'd like to consider the implications of this question. If second systems are _not_ inevitable, then it means it should be possible to build something right from the beginning and use it virtually forever. Can we continually prune and improve existing systems with cost, maintainability, and performance in mind? 
+I'd like to consider the implications of this question. If second systems are _not_ inevitable, then it means it should be possible to build something right from the beginning and use it virtually forever. Can we continually prune and improve existing systems with cost, maintainability, and performance in mind?
 
 On the other hand, if second systems _are_ inevitable, then we should probably build systems so as to ease the pain of migrating to later systems as painless as possible: we should _commit_ less to a first system if we can.
 
@@ -59,6 +65,6 @@ In practice, it seems like successful software systems often last between 5 and 
 
 Now, if a company leader comes to me and requests a new software system and I start by saying, "this will take months to build and if we're lucky it will last for five years," what's the likelihood that they'll even want to proceed with the project? The revenue returned from that system will likely have to be substantial.
 
-Further, as a software engineer, if I look at every new project and think to myself, "If this is successful it will last 5 years and if it's wildly successful it will last 10 years," then it may also _change_ what I decide to build. 
+Further, as a software engineer, if I look at every new project and think to myself, "If this is successful it will last 5 years and if it's wildly successful it will last 10 years," then it may also _change_ what I decide to build.
 
 The last idea I find useful to hold in my head when thinking about what it is appropriate to build in an organization, and I think it's a useful, practical yardstick to offer to ask software engineers to consider whenever they initiate new projects.
