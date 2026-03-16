@@ -18,7 +18,7 @@
 			class="mr-3 h-6 sm:h-9"
 			alt="Logo"
 		/>
-		<span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">ekadanta.co</span>
+		<span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">erikaker.com</span>
 	</NavBrand>
 	<NavHamburger on:click={toggle} />
 	<NavUl {hidden}>
