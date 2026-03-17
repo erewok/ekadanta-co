@@ -11,4 +11,5 @@
 		time near the ocean.
 	</P>
 	<P class="pt-4 px-8">I appear on a weekly podcast called <a href="https://www.picturemecoding.com/"><b class="text-teal-600">Picture Me Coding</b></a>. I'm also sometimes active on <a href="https://github.com/erewok"><b class="text-teal-600">Github</b></a>.</P>
+	<P class="pt-4 px-8">All content on this site has been written by ME (a 100% human-being slushy organism) with <b>ZERO</b> AI-contributions (which is also why I'm so slow to type and publish more things, but I digress...).</P>
 </section>
