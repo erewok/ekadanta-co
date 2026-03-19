@@ -1,22 +1,51 @@
 import { error } from '@sveltejs/kit';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import rehypePrism from 'rehype-prism-plus';
+import rehypeStringify from 'rehype-stringify';
+
+// Grab raw .svx file content at build time (Vite resolves glob statically)
+const rawFiles = import.meta.glob('../content/**/*.svx', { query: '?raw', import: 'default' });
+
+const processor = unified()
+	.use(remarkParse)
+	.use(remarkGfm)
+	.use(remarkRehype, { allowDangerousHtml: true })
+	.use(rehypePrism)
+	.use(rehypeStringify, { allowDangerousHtml: true });
+
+/** Strip YAML frontmatter block from raw .svx content */
+function stripFrontmatter(raw) {
+	// Normalize CRLF → LF so the regex works regardless of line-ending style
+	return raw.replace(/\r\n/g, '\n').replace(/^---\n[\s\S]*?\n---\n?/, '');
+}
 
 /**
- * @param {string} contentType
+ * @param {string} contentType  'blog' | 'projects'
  * @param {string} uuid
  */
-
 export async function loader(contentType, uuid) {
+	const key = `../content/${contentType}/${uuid}.svx`;
 
-	const post = await import(`../content/${contentType}/${uuid}.svx`)
+	// Use mdsvex-compiled component only for metadata (a named export)
+	const post = await import(`../content/${contentType}/${uuid}.svx`).catch(() => null);
 	if (!post) throw error(404);
+	const { metadata } = post;
 
-	const { default: renderer, metadata } = post;
-	const content = renderer.render().html;
+	// Process raw markdown independently — avoids Svelte 5 render() compatibility issues
+	const getRaw = rawFiles[key];
+	if (!getRaw) throw error(404);
+	const raw = await getRaw();
+
+	const markdownBody = stripFrontmatter(raw);
+	const result = await processor.process(markdownBody);
 
 	return {
 		metadata,
-		content,
-	}
+		content: String(result),
+	};
 }
 
 /**

@@ -11,26 +11,26 @@ tags: ['Claude', 'AI']
 title: I Have Been Working on This Thing Called BMO
 ---
 
-Over the last two weeks I have been working on a small CLI tool called `bmo`, which you can find on [github.com](https://github.com/erewok/bmo). Alternatively, if you have a rust toolchain on your machine, you can install it with `cargo install bmo`. 
+Over the last two weeks I have been working on a small CLI tool called `bmo`, which you can find on [github.com](https://github.com/erewok/bmo). Alternatively, if you have a rust toolchain on your machine, you can install it with `cargo install bmo`.
 
-`bmo` is an issue-tracker that is local to your machine only, with sqlite as its database. You can get started by running the command `bmo init` in a project you'd like to work on, which will initialize an issue database in your current directory (`bmo` issues are always associated with a particular project-directory). 
+`bmo` is an issue-tracker that is local to your machine only, with sqlite as its database. You can get started by running the command `bmo init` in a project you'd like to work on, which will initialize an issue database in your current directory (`bmo` issues are always associated with a particular project-directory).
 
 Here's a quickstart example of working with `bmo`, but check out the [main project](https://github.com/erewok/bmo) for detailed docs:
 
 ```sh
 # Head to some project directory
-❯ cd ekadanta-co 
+❯ cd ekadanta-co
 
 # Here is how I initialize a new bmo DB
 ❯ bmo init
 Initialized bmo project at /Users/erewok/open_source/ekadanta-co/.bmo/issues.db
 Consider adding .bmo/ to your .gitignore
 
-# I am going to create an epic to start with but it's not required to have one.
-❯ bmo issue create --title "Epic: Ekadanta Post Storm" --kind epic -d "Write 20 posts in 20 days challenge" 
+# I am going to create an epic to start with but it's not required
+❯ bmo issue create --title "Epic: Ekadanta Post Storm" --kind epic -d "Write 20 posts in 20 days challenge"
 Created BMO-1: Epic: Ekadanta Post Storm
 
-# Here's an issue with a parent (all commands can return json, which is useful for agents...)
+# Here's an issue with a parent (all commands can return json)
 ❯ bmo issue create --title "Day 1: What you had for breakfast this morning" --parent BMO-1 --json
 {
   "data": {
@@ -60,26 +60,21 @@ Created BMO-1: Epic: Ekadanta Post Storm
 ├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌┤
 │ BMO-2 ┆ ○ backlog ┆ ↔ medium ┆ ▶ task ┆ Day 1: What you had for breakfast this morning ┆          │
 ╰───────┴───────────┴──────────┴────────┴────────────────────────────────────────────────┴──────────╯
- 
-# I can also find the *next* tickets available to work on with this
+
+# I can also find the *next* tickets to work on
 ❯ bmo next
 ╭───────┬───────────┬──────────┬────────┬────────────────────────────────────────────────┬──────────╮
 │ ID    ┆ Status    ┆ Priority ┆ Kind   ┆ Title                                          ┆ Assignee │
 ╞═══════╪═══════════╪══════════╪════════╪════════════════════════════════════════════════╪══════════╡
 │ BMO-2 ┆ ○ backlog ┆ ↔ medium ┆ ▶ task ┆ Day 1: What you had for breakfast this morning ┆          │
 ╰───────┴───────────┴──────────┴────────┴────────────────────────────────────────────────┴──────────╯
-
-# Decided I don't need these so, I'll throw *everything* away now
-❯ bmo truncate --all
-Delete ALL 2 issue(s) permanently? This cannot be undone. [y/N] y
-Deleted 2 issue(s).
 ```
- 
-### BMO Web View and Dependency Graph
 
 You can also try out the web interface (which shows updates to your board in real time) with `bmo web`.
 
-Finally, one key design feature of `bmo` is the dependency-tracking between issues: `bmo` keeps track of the dependency graph represented your tasks and so finding out which tickets are ready to start working on is as simple as `bmo next`. 
+### BMO Web View and Dependency Graph
+
+One key design feature of `bmo` is the dependency-tracking between issues: `bmo` keeps track of the dependency graph represented your tasks and so finding out which tickets are ready to start working on is as simple as `bmo next`.
 
 Relations between tickets are similar to what you mind find a tool like Jira: parent-child, blocks, blocked-by, relates-to, etc.
 
@@ -87,29 +82,31 @@ These relations are typically defined by the *files each ticket relates to*: in 
 
 ## BMO Is Not For Humans
 
-Here's the key, though: `bmo` is **not** primarily designed to be used by human users: its primary audience are **coding agents**, such as Claude Code. 
+Here's the key, though: `bmo` is **not** primarily designed to be used by human users: its primary audience are **coding agents**, such as Claude Code.
 
-To really get the maximum use out of `bmo`, you have to create some [agents](https://github.com/erewok/bmo-agent-setup/tree/main/agents) and [skills](https://github.com/erewok/bmo-agent-setup/tree/main/skills) that are primed to use an issue tracking tool. 
+To get the maximum use out of `bmo`, you have to create some [agents](https://github.com/erewok/bmo-agent-setup/tree/main/agents) and [skills](https://github.com/erewok/bmo-agent-setup/tree/main/skills) that are primed to use an issue tracking tool.
 
-When you do this, you may find yourself, as I was, surprised by the outcome...
+When you do this, you may find yourself surprised by the outcome.
 
 ## Unreasonably Effective
 
-The weirdest part is that after you do these things:
+The weirdest part is that after you set it all up:
 
 - install `bmo`
 - add some custom agents that are instructed to use `bmo`.
 - add a skill to coordinate those agents (such as [this one](https://github.com/erewok/bmo-agent-setup/blob/main/skills/dev-team/SKILL.md))
 
-Suddenly, Claude and other tools *leveled up* in their ability to churn through work with a much higher level of complexity. 
+Suddenly, Claude and other tools get *leveled up* in their ability to churn through work with a much higher level of complexity.
 
-For example, at work, I generated a "version-2" integration with an HTTP API for one of our vendors. Because their new API is so vastly different from the old one, this new integration was going to be a total rewrite of our v1 application. Also, because the work had been deferred as not a high priority, I realized probably nobody would mind if I kicked off a copilot-cli session (we have copilot licenses) to try to generate the new integration whole-cloth. So that's what I did: I ended up with 5,000 lines of code and tests in around 3 hours of mostly hands-off work (I did other things while Copilot worked). 
+For example, at work, I generated a "version-2" integration to an HTTP API from one of our vendors. Because their new API is vastly different from the old one, this new integration is a total rewrite.
 
-I have to admit that I spent about *two hours* gathering and preparing materials before I was ready to give Copi,lot a prompt, but the materials I gathered were things like openapi specs and instructions from the third party as well as a large markdown description of the project and what its goals were as well the endpoints we needed to target.
+Also, because the work had been deferred as low priority, I realized probably nobody would mind if I kicked off a copilot-cli session (we have copilot licenses) to try to generate the new integration whole-cloth. So that's what I did, and I ended up with 5,000 lines of code and tests in around 3 hours of mostly hands-off work (I did other things while Copilot worked).
 
-But the result was incredible: it looked like any of our other projects, it included code *and* tests, and it was almost entirely correct. (I had to make some minor requests for design changes.)
+I must admit that I spent about *two hours* gathering and preparing materials before I was ready to give Copilot a prompt, but the materials I gathered were things like openapi specs and instructions from the third party as well as a large markdown description of the project and what its goals were.
 
-I shocked: it's crazy how big and ambitious you can get now with your coding projects using these tools. 
+But the result was incredible! It looked like any of our other projects, it included code *and* tests, and it was almost entirely correct. (I had to make some minor requests for design changes.)
+
+I was shocked: it's crazy how big and ambitious you can get now with your coding projects using these tools.
 
 ## Why Does It Work?
 
@@ -117,34 +114,32 @@ In the last six months, I've been working with Copilot and Claude to explore and
 
 However, I found that larger, more ambitious projects usually fell into the following pattern where I would be driving an agent through these steps:
 
-1. "Research": read and summarize a bunhc of stuff and existing code into one or more markdown files
+1. "Research": read and summarize a bunch of stuff and existing code into one or more markdown files.
 2. "Plan": plan out the phases and steps in our feature (resulting in more markdown files)
 3. "Implement": start building and checking off items on the "plan".
 
-I don't know about other people's successes with this, but there's a definite ceiling for me in the size and complexity of tasks I could take on with this workflow and that ceiling was surprisingly small (a new testing harness for an application say, or comprehenshive documentation, or adding a new feature, or even building a bare-bones MVP without any features included).
+I don't know about other people's successes with this, but there's a definite ceiling for me in the size and complexity of tasks I could take on with this workflow and that ceiling was surprisingly low (a new testing harness for an application say, or comprehenshive documentation, or adding a new feature, or even building a bare-bones MVP without any features included).
 
-Often when running through this workflow, I would have to tune the results along the way, making sure the code makes sense, making sure that we aren't *overbuilding* junk, and making sure that it's all in line with what our overall goals are. 
+Often when running through this workflow, I would have to tune the results along the way, making sure the code makes sense, making sure that we aren't *overbuilding* junk, and making sure that it's all in line with what our overall goals are.
 
-For me, the `bmo` workflow outputs have been fantastically better and I think it's because of this:
+By contsrat, the `bmo`-powered outputs have been fantastically better. I think the differences come down to:
 
-- `bmo` tickets represent work to be completed by *independent sub-agents* (which can run in parallel as long as their work doesn't conflict)
+- `bmo` tickets represent work to be completed by *independent sub-agents* (which can run in parallel as long as their work doesn't conflict).
 - `bmo` tickets are only to be addressed by a specific persona: the ["senior-engineer" agent](https://github.com/erewok/bmo-agent-setup/blob/6de9320292ece690cfc413be10357b753ba4f09b/agents/senior-engineer.md)
-- Tickets are *small* and well-scoped, describing exactly the files to be created, amended, edited.
+- Tickets are **small** and well-scoped, describing exactly the files to be created, amended, edited.
 - Work is reviewed by the ["staff-engineer" agent](https://github.com/erewok/bmo-agent-setup/blob/6de9320292ece690cfc413be10357b753ba4f09b/agents/staff-engineer.md)
-- Comments, things to fix, other issues raised by the "staff-engineer" are added as comments to the `bmo` ticket.
-- The "senior-engineer" is not allowed to close a ticket until all issues raised by the "staff-engineer" subagent have been completed. 
-- `bmo` is the communication and coordination mechanism between sub-agents.
+- Comments, things to fix, and other issues raised by the "staff-engineer" are added as comments to the `bmo` ticket.
+- The "senior-engineer" is not allowed to close a ticket until all issues raised by the "staff-engineer" subagent have been completed.
 
-In short, a ticketing program like `bmo` keeps the context extremely small and well-scoped and the independent agents don't get lost in the weeds trying to read and comprehend the _whole enchilada_, which simultaneously clutters up their context and also blurs their roles: the tickets are written with the intent of the "senior engineer" being the audience for them: its job is *not* to identify and handle anything in the future *beyond the scope of the ticket*.
+Ultimately, `bmo` is the communication and coordination mechanism between sub-agents with the benefit that `bmo` keeps the context for workers ("senior-engineer" agents) extremely small and well-scoped, and independent agents don't get lost in the weeds trying to read and comprehend the _whole enchilada_. Having every task have the entire planned-out request in the context window simultaneously clutters up their context and also blurs their roles. Instead, `bmo` tickets are written with the intent of the "senior engineer" being the audience for them: its job is *not* to identify and handle anything in the future *beyond the scope of the ticket*.
 
 And I'm still just kind of astounded at how well it works.
 
-
 ## Credit to the Originators
 
-I didn't come up with the idea for `bmo`. I was inspired by an impromptu demo my friend Erik gave at the Scale Conference in Pasadena this year. He had created a tool called [`docket`](https://github.com/ALT-F4-LLC/docket) and he was using it in combination with agents and skills in the same way that I have adapted for `bmo`. I really wanted to give Erik credit for the ideas in here, so I tried to attribute his work on my project as I amended and adapted the original idea (`bmo web`, for example, was a feature I added). For his part, Erik said he was inspired by [Beads](https://github.com/steveyegge/beads).
+I didn't come up with the idea for `bmo`. I was inspired by an impromptu demo my friend Erik gave at the Scale Conference in Pasadena this year. He had created a tool called [`docket`](https://github.com/ALT-F4-LLC/docket) and he was using it in combination with agents and skills in the same way that I have adapted for `bmo`. I wanted to give Erik credit for the ideas in here, so I tried to attribute his work on my project as I amended and adapted the original idea (`bmo web`, for example, was a feature I added). For his part, Erik said he was inspired by [Beads](https://github.com/steveyegge/beads).
 
-You can find Erik on [Twitch](https://www.twitch.tv/thealtf4stream) and [Youtube](https://www.youtube.com/thealtf4stream) where live-codes all kinds of stuff.
+You can find Erik on [Twitch](https://www.twitch.tv/thealtf4stream) and [Youtube](https://www.youtube.com/thealtf4stream) where he live-codes all kinds of stuff.
 
 ## Conclusion
 
@@ -152,6 +147,6 @@ For now, I've been playing with `bmo` to build various things (including `bmo` i
 
 In short period of time, however, I have become convinced that much more complex software than I previously thought was possible can be generated automatically by coding agents with the right prompts and auxiliary tools around them, and I'm looking forward to seeing how this may change.
 
-In the meantime, I'm enjoying playing with and [adding features](https://github.com/erewok/bmo/pull/7) to `bmo`, even if it eventually gets superceded by other tooling and I have to leave it behind. 
+In the meantime, I'm enjoying playing with and [adding features](https://github.com/erewok/bmo/pull/7) to `bmo`, even if it eventually gets superceded by other tooling and I have to leave it behind.
 
 My eyes are open to the possibilities now and I'm staring at the edge of a cliff trying to comprehend what I'm seeing.

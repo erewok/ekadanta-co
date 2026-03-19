@@ -7,13 +7,17 @@
 	import '../app.css';
 	import Nav from './Nav.svelte';
 	import Footer from './Footer.svelte';
+
+	let { children } = $props();
 </script>
 
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <Nav />
 
-<main class="px-20 py-10 mx-auto">
-<slot />
+<main id="main-content" tabindex="-1" class="max-w-[900px] mx-auto px-4 sm:px-8 py-10">
+{@render children()}
 </main>
 
 <Footer />

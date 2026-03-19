@@ -1,15 +1,62 @@
-<script>
-	import { Img, Heading, P } from 'flowbite-svelte';
-</script>
-
 <section>
-	<Img class="object-cover rounded-lg w-full"  alt="Surfing on a wave" alignment="mx-auto" size="max-w-xl" src="/images/erik-surf-seafoam-color.jpeg" />
-	<Heading class="pt-8 px-8" tag="h1" customSize="text-3xl">👋 Hi, I'm Erik.</Heading>
-	<P class="pt-8 px-8">
+	<img
+		src="/images/erik-surf-seafoam-color.jpeg"
+		alt="Erik surfing on a wave"
+		loading="lazy"
+		class="hero-img"
+	/>
+	<h1>Hi, I'm Erik.</h1>
+	<p>
 		I'm a software developer in San Diego, California, working in Python, Rust, and Kubernetes. My
-		interests include functional programming in Haskell and Rust, as well as surfing, tidepooling, and spending
+		interests include functional programming and distributed systems, as well as surfing, tidepooling, and spending
 		time near the ocean.
-	</P>
-	<P class="pt-4 px-8">I appear on a weekly podcast called <a href="https://www.picturemecoding.com/"><b class="text-teal-600">Picture Me Coding</b></a>. I'm also sometimes active on <a href="https://github.com/erewok"><b class="text-teal-600">Github</b></a>.</P>
-	<P class="pt-4 px-8">All content on this site has been written by ME (a 100% human-being slushy organism) with <b>ZERO</b> AI-contributions (which is also why I'm so slow to type and publish more things, but I digress...).</P>
+	</p>
+	<p>I appear on a regular podcast called <a href="https://www.picturemecoding.com/" class="site-link" target="_blank" rel="noopener noreferrer">Picture Me Coding<span class="sr-only">(opens in new tab)</span></a> and you can also find me on <a href="https://github.com/erewok" class="site-link" target="_blank" rel="noopener noreferrer">Github<span class="sr-only">(opens in new tab)</span></a>.</p>
+	<p>All content on this site has been written by ME (a 100% human-being slushy organism) with <b>ZERO</b> AI-contributions (which is also why I'm so slow to type and publish more things, but I digress...).</p>
 </section>
+
+<style>
+section {
+  max-width: 600px;
+  margin: 0 auto;
+}
+.hero-img {
+  max-width: 512px;
+  width: 100%;
+  margin: 0 auto 2rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+  display: block;
+}
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a3a4a;
+  margin-bottom: 1rem;
+}
+p {
+  color: #1e293b;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+.site-link {
+  color: #0f7a6e;
+  font-weight: 500;
+}
+.site-link:hover {
+  text-decoration: underline;
+  color: #1a3a4a;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+</style>

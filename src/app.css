@@ -2,3 +2,99 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Page background ───────────────────────────────────── */
+body {
+  background-color: #f5f2ec;
+  color: #1e293b;
+}
+
+/* ── Skip link ─────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-link:focus {
+  position: static;
+  left: auto;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  background: #0f7a6e;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  z-index: 9999;
+}
+
+/* ── Global focus indicator ────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid #0f7a6e;
+  outline-offset: 3px;
+}
+
+/* ── Inline code (unstyled by Prism) ───────────────────── */
+:not(pre) > code:not([class]) {
+  font-family: Consolas, Monaco, 'Andale Mono', monospace;
+  font-size: 0.875em;
+  background: #f0f4f3;
+  color: #1a3a4a;
+  padding: 0.125em 0.375em;
+  border-radius: 0.25rem;
+  border: 1px solid #d4e9e5;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+/* ── Fenced code blocks ─────────────────────────────────── */
+pre[class*='language-'] {
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid #e8e1d0;
+  margin: 1.5rem 0;
+  font-size: 0.875rem;
+}
+
+/* Styled scrollbar for code blocks */
+pre[class*='language-']::-webkit-scrollbar {
+  height: 6px;
+}
+pre[class*='language-']::-webkit-scrollbar-track {
+  background: #fdf6e3;
+}
+pre[class*='language-']::-webkit-scrollbar-thumb {
+  background: #c4d7d4;
+  border-radius: 3px;
+}
+
+/* ── Prose overrides ───────────────────────────────────── */
+.prose table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* prose blockquote accent */
+.prose blockquote {
+  border-left-color: #e8dfc8;
+}
+
+/* prose heading colors */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: #1a3a4a;
+}
+
+/* prose link color */
+.prose a {
+  color: #0f7a6e;
+}
+.prose a:hover {
+  color: #1a3a4a;
+}

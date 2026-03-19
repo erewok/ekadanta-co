@@ -11,9 +11,9 @@ tags: ['haskell', 'servant']
 title: Haskell Servant App ekadanta-co
 ---
 
-Over the years, I've built many personal websites mostly to have somewhere to write blog-posts or notes for myself on how I've solved different problems. Sometimes in the course of building these sites, I've gotten overly ambitious because I'm trying to learn to do different things that may prove useful in my day job. 
+Over the years, I've built many personal websites mostly to have somewhere to write blog-posts or notes for myself on how I've solved different problems. Sometimes in the course of building these sites, I've gotten overly ambitious because I'm trying to learn to do different things that may prove useful in my day job.
 
-This is what happened with my last site, for instance, where I built a [Servant](https://github.com/haskell-servant/servant) app with an Elm frontend and I quickly got to a point where the application was too large for the amount of time I had to dedicate to it in my spare time (I have a young child at home and other interests as well). 
+This is what happened with my last site, for instance, where I built a [Servant](https://github.com/haskell-servant/servant) app with an Elm frontend and I quickly got to a point where the application was too large for the amount of time I had to dedicate to it in my spare time (I have a young child at home and other interests as well).
 
 Now, in the most recent iteration I could have just used a static site generator, because there' s nothing dynamic in the content. However, I really enjoy using Servant to build web applications, so for this most recent version of my site, I built a Servant application that renders HTML and uses an Elasticsearch backend.
 
@@ -30,7 +30,7 @@ With Servant's API specification, this is actually pretty straightforward, and I
 Servant notably auto-generates client code in a handful of languages as long as you have an API spec. For the Elasticsearch index used for this site, I created an index called `ekadanta` and a document type `content` and then to craft a client I specified the following Elasticsearch endpoints:
 
 ```haskell
-type SearchAPI = 
+type SearchAPI =
   "ekadanta" :> ReqBody '[JSON] Value :> Put '[JSON] Value
   :<|> "ekadanta" :> "content" :> "_search" :> ReqBody '[JSON] Value :> Post '[JSON] Value
   :<|> "ekadanta" :> "content" :> Capture "docId" UUID.UUID :> Get '[JSON] Value
@@ -49,18 +49,18 @@ Of course, an Elasticsearch server offers a lot more endpoints, but the above sp
 After we have the above Servant spec, we can auto-generate clients to interact with the server, and it's a common pattern with Servant clients to wrap up all the client functions into a custom data type:
 
 ```haskell
-data SearchClient = 
-  SearchClient 
+data SearchClient =
+  SearchClient
   {
   createSearchIndex :: Value -> ClientM Value
   , searchIndexContent :: Value -> ClientM Value
   , getSearchContent :: UUID.UUID -> ClientM Value
   , indexDocument :: UUID.UUID -> Resource -> ClientM Value
-  } 
+  }
 
 mkSearchClient :: SearchClient
-mkSearchClient = 
-  let 
+mkSearchClient =
+  let
     createSearchIndex :<|> searchIndexContent :<|> getSearchContent :<|> indexDocument
       = client (Proxy :: Proxy SearchAPI)
   in SearchClient {..}
@@ -72,8 +72,8 @@ There are also some other utility functions we create to actually run the client
 
 ```haskell
 searchContent :: SiteConfig -> Value -> IO (Either ServantError Value)
-searchContent config query = 
-  runSearchClient config 
+searchContent config query =
+  runSearchClient config
     . ($ query)
     . searchIndexContent
     $ mkSearchClient
@@ -96,7 +96,7 @@ resourcesResp  <- liftIO $ searchContent config query
 
 ### Adding On to Our Elasticserch Client
 
-Working with `Value`s everywhere may be kind of lame, especially when those `Value`s are deeply nested JSON structures (thanks, Elasticsearch...) and when we also know the structure of our document. I *could have* created a custom data type and defined `FromJSON` instances for it from my index type, but Elasticsearch's return types will be different when searching content versus looking it up directly. 
+Working with `Value`s everywhere may be kind of lame, especially when those `Value`s are deeply nested JSON structures (thanks, Elasticsearch...) and when we also know the structure of our document. I *could have* created a custom data type and defined `FromJSON` instances for it from my index type, but Elasticsearch's return types will be different when searching content versus looking it up directly.
 
 As a result, I just decided to write functions to parse and return our content from `Value`s. In these efforts, [`lens-aeson`](http://hackage.haskell.org/package/lens-aeson) was extremely useful:
 
@@ -136,15 +136,15 @@ getResourceHits config query = do
     Right value -> pure . Right $ pullHitsResources value
 
 pullHitsResources :: Value -> [Resource]
-pullHitsResources value = 
+pullHitsResources value =
   let
-    sources = 
-      value 
-        ^? key "hits" 
+    sources =
+      value
+        ^? key "hits"
         . key "hits"
-        . _Array 
-        ^.. folded 
-        . traverse 
+        . _Array
+        ^.. folded
+        . traverse
         . key "_source"
   in mapMaybe decodeMaybeResource sources
 ```
@@ -161,14 +161,14 @@ searchPaginatingQ rt Nothing offset = Object $ HM.fromList [
   ( "from", toJSON offset )
   , ( "size", toJSON _DEFAULT_PAGE_COUNT )
   , ( "query", resourceTypeTerm rt )
-  , ( "sort", pubDateDescSort ) 
+  , ( "sort", pubDateDescSort )
   , ("aggs", Object $ HM.fromList [ ("tags", tagsAgg), ("counts", docTypeCount) ] )
   ]
 searchPaginatingQ rt (Just count) offset = Object $ HM.fromList [
   ( "from", toJSON offset )
   , ( "size", toJSON count )
   , ( "query", resourceTypeTerm rt )
-  , ( "sort", pubDateDescSort ) 
+  , ( "sort", pubDateDescSort )
   , ("aggs", Object $ HM.fromList [ ("tags", tagsAgg), ("counts", docTypeCount) ] )
   ]
 ```
@@ -204,7 +204,7 @@ The top function runs the search function and then passes it to the `searchConte
 
 ## Servant and Blaze
 
-I actually really enjoy using [Blaze](http://hackage.haskell.org/package/blaze-html) because it allows for easily separating out chunks of markup into discrete functions which can be reused, and, in my opinion, it makes for clean-looking markup. 
+I actually really enjoy using [Blaze](http://hackage.haskell.org/package/blaze-html) because it allows for easily separating out chunks of markup into discrete functions which can be reused, and, in my opinion, it makes for clean-looking markup.
 
 For the `contentListPage` function referenced in the handler above, for instance, I created [the following functions](https://github.com/erewok/ekadanta-co-servant/blob/main/src/Site/Html/ContentList.hs):
 
@@ -224,14 +224,14 @@ The above referenced functions like this:
 
 ```haskell
 renderContentListItemFeaturedImg :: Resource -> Html
-renderContentListItemFeaturedImg item = 
+renderContentListItemFeaturedImg item =
   case (item ^. featuredImage) of
     Nothing -> pure ()
     Just img -> H.div ! A.class_ "content-list-item-featured-img" $
       H.img ! A.src (H.toValue img)
 
 renderContentListItemLede :: Resource -> Html
-renderContentListItemLede item = 
+renderContentListItemLede item =
   H.div ! A.class_ "content-list-item-lede" $ do
     H.span ! A.class_ "content-list-item-date" $ H.toMarkup (item ^. pubdate)
     H.h3 $ H.toMarkup (item ^. title)
@@ -247,7 +247,7 @@ Due to the indentation, I find that the nested parent-child relationships betwee
 As with the Elasticsearch server, to use Servant to create clients, servers, documentation, or even automated tests for an API, we must have a spec for it. For this site, we'll need a server, so for the public-facing pages, our spec looks like this:
 
 ```haskell
-type PublicApi = 
+type PublicApi =
   "posts" :> SCE.Throws AppErrors :> Get '[HTML] Html
   :<|> "projects" :> SCE.Throws AppErrors :> Get '[HTML] Html
   :<|> "posts" :> Capture "pgNum" Int :> SCE.Throws AppErrors :> Get '[HTML] Html
@@ -283,7 +283,7 @@ There are some somewhat complicated aspects to creating a server with authentica
 
 ## Deploying Docker Containers
 
-Lastly, in order to deploy this site, I wanted to build and run a docker container, but unfortunately, the docker images required to do so often stretch into the GB size. 
+Lastly, in order to deploy this site, I wanted to build and run a docker container, but unfortunately, the docker images required to do so often stretch into the GB size.
 
 To resolve this, I've been using multi-stage builds, so the [docker file for this application](https://github.com/erewok/ekadanta-co-servant/blob/main/Dockerfile) first loads dependencies and then installs the project and then in a later stage copies the executables in a base debian image, like this:
 
@@ -305,6 +305,6 @@ EXPOSE 8000
 CMD ["/opt/ekadanta-co/bin/ekadanta-co"]
 ```
 
-After that, we have Github actions to [run tests](https://github.com/erewok/ekadanta-co-servant/blob/main/.github/workflows/haskell.yml) and [build and push the docker image](https://github.com/erewok/ekadanta-co-servant/blob/main/.github/workflows/build-push-docker.yml) to dockerhub on a new git tag. 
+After that, we have Github actions to [run tests](https://github.com/erewok/ekadanta-co-servant/blob/main/.github/workflows/haskell.yml) and [build and push the docker image](https://github.com/erewok/ekadanta-co-servant/blob/main/.github/workflows/build-push-docker.yml) to dockerhub on a new git tag.
 
 When a new build is ready, we can deploy it by updating the version on the server and rolling the Docker container.
