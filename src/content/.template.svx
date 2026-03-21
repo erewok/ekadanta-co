@@ -1,0 +1,13 @@
+---
+pubdate: __DATE__
+lede: ""
+published: False
+title: "__TITLE__"
+contentEncoding: ContentMarkdown
+resourceType: __RESOURCE_TYPE__
+featuredImage: /images/
+imageAlt: ""
+tags: []
+---
+
+Write your content here.

@@ -24,13 +24,13 @@ function stripFrontmatter(raw) {
 
 /**
  * @param {string} contentType  'blog' | 'projects'
- * @param {string} uuid
+ * @param {string} slug
  */
-export async function loader(contentType, uuid) {
-	const key = `../content/${contentType}/${uuid}.svx`;
+export async function loader(contentType, slug) {
+	const key = `../content/${contentType}/${slug}.svx`;
 
 	// Use mdsvex-compiled component only for metadata (a named export)
-	const post = await import(`../content/${contentType}/${uuid}.svx`).catch(() => null);
+	const post = await import(`../content/${contentType}/${slug}.svx`).catch(() => null);
 	if (!post) throw error(404);
 	const { metadata } = post;
 
@@ -63,8 +63,9 @@ export async function contentList(contentType) {
 		Object.keys(mdModules).map(async (path) => {
 			const { metadata } = await mdModules[path]();
 			if (metadata) {
-				const { title, pubdate, lede, published, pid, contentEncoding, resourceType, featuredImage, tags, imageAlt } = metadata;
-				return { title, pubdate, lede, published, pid, contentEncoding, resourceType, featuredImage, tags, imageAlt  };
+				const slug = path.split('/').pop().replace('.svx', '');
+				const { title, pubdate, lede, published, contentEncoding, resourceType, featuredImage, tags, imageAlt } = metadata;
+				return { title, pubdate, lede, published, slug, contentEncoding, resourceType, featuredImage, tags, imageAlt };
 			}
 		})
 	);

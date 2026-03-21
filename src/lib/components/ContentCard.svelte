@@ -30,7 +30,7 @@
   </div>
   <div class="card-body">
     <h2>
-      <a href="/{contentType}/{metadata.pid}" class="card-title-link">
+      <a href="/{contentType}/{metadata.slug}" class="card-title-link">
         {metadata.title}
       </a>
     </h2>
@@ -45,7 +45,7 @@
     {/if}
     <TagList tags={metadata.tags} />
     <a
-      href="/{contentType}/{metadata.pid}"
+      href="/{contentType}/{metadata.slug}"
       class="card-read-more"
       aria-label="Read more about {metadata.title}"
     >

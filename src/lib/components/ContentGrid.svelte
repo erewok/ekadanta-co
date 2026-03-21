@@ -9,7 +9,7 @@
 <section>
   {#if items && items.length > 0}
     <ul class="content-grid" aria-label="{label}">
-      {#each items as item (item.pid)}
+      {#each items as item (item.slug)}
         <li>
           <ContentCard {contentType} metadata={item} />
         </li>

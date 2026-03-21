@@ -1,0 +1,14 @@
+# Blog posts: UUID → slug redirects
+/posts/06d3ecd0-b6bb-4204-a9e4-ffc85e2f3449 /posts/2020-12-16-a-little-disassembling 301
+/posts/23b41d9b-9ec0-4fde-ad6b-9f837ffba9e7 /posts/2020-08-20-understanding-pythons-asgi-spec 301
+/posts/639bcb85-8894-4101-a486-69615847c106 /posts/2023-08-12-what-cost-convenience-fastapi 301
+/posts/add5a869-f783-4ded-8012-1e2a92efda32 /posts/2023-06-25-oh-no-opentelemetry-memory-leaks 301
+/posts/ba331206-1741-4b03-88b6-2d2baa33cf2d /posts/2023-10-11-are-second-systems-inevitable 301
+
+# Projects: UUID → slug redirects
+/projects/0964a03d-c83f-4cf6-9fa8-00b5ef80f743 /projects/2018-11-01-parsing-millions-of-large-json-files-in-haskell 301
+/projects/0d9aabc3-b5bc-4cb1-a8d5-877273637312 /projects/2023-09-04-new-personal-site-sveltekit 301
+/projects/222e7b9d-fb1c-43a1-b8cd-df90f0a5618e /projects/2026-03-17-i-have-been-working-on-bmo 301
+/projects/293f4128-256e-4889-a6f4-2d17ea93cf10 /projects/2014-10-01-taco-shop-name-generator 301
+/projects/532759f2-1525-4603-8cd1-8ec8b309eec5 /projects/2022-04-21-raft 301
+/projects/c67eccd2-6ddc-4657-b592-c7fb16626e6f /projects/2019-06-26-haskell-servant-app-ekadanta-co 301
