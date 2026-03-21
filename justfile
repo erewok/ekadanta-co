@@ -1,17 +1,25 @@
 # ekadanta-co dev recipes
+_default:
+    just --list
 
+# Run the dev build
 dev:
     npm run dev
 
+# Build the project
 build:
     npm run build
 
+# Preview
 preview:
+    just build
     npm run preview
 
+# Run the formatter
 format:
     npm run format
 
+# Code check
 check:
     npm run check
 

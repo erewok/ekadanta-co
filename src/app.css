@@ -98,3 +98,18 @@ pre[class*='language-']::-webkit-scrollbar-thumb {
 .prose a:hover {
   color: #1a3a4a;
 }
+
+/* prose figure / image attribution */
+.prose figure {
+  margin: 1.5rem 0;
+}
+.prose figure img {
+  width: 100%;
+  border-radius: 0.5rem;
+}
+.prose figcaption {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.4rem;
+  text-align: center;
+}
