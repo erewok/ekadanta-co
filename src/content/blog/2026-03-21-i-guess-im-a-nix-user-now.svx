@@ -21,7 +21,7 @@ But there were two technical themes I took away from my week at Scale:
 - AI stuff invading all the spaces
 - Nix
 
-This post is about the latter because volunteering at the conference converted me into a Nix user! And of course, like any new convert, I am compelled to evangelize! It's like I just discovered the truth and so I have to tell people.
+This post is about the latter because volunteering at the conference converted me into a Nix user! And of course, like any new convert, I am compelled to evangelize! (Half-joking there: did you know I used to write Haskell...?)
 
 ## The NixOS Lure
 
@@ -32,10 +32,10 @@ The scale-network repo specifically is organized primarily as a Nix configuratio
 Now, NixOS is a thin wrapper around Linux, but one confusing thing about Nix is that it represents __three different__ things which can work together:
 
 - Nix Packages: the package manager.
-- Nix the programming language: a functional programming language uses to write nix configurations (instructions for installing packages and configuring machines).
+- Nix the programming language: a functional programming language used to write nix configurations, instructions for installing packages and configuring machines.
 - NixOS: a Linux operating system which comes pre-integrated with the above.
 
-So to start with just before the conference and for the first days there, I had a Linux machine with NixOS, which I could use to modify and test changes to their codebase. I also could ssh into various systems to debug or evaluate ways to adapt the codebase to configure them differently.
+So then starting just before the conference and for the first days there, I was running a Linux machine with NixOS, which I could use to modify and test changes to their codebase.
 
 ## Fast Feedback Configuration Changes
 
@@ -45,9 +45,9 @@ Almost instantly after booting into NixOS and deciding I needed to make changes,
 - run `nixos-rebuild switch`
 - check if the new configuration is how I wanted it (or rollback with one command)
 
-Now, I've configured so many machines for software development over the years. I've written Ansible, Saltstack, Terraform, CloudFormation, godawful hand-coded shell scripts and other junk, some Azure biz, and various other things I'm forgetting in order to reliably and predictably configure cloud machines. When it comes to _personal_ machines, my "process" is nonexistent, characterized by infrequent attempts which are all fuzzy, manual and really based on my entirely fallible memory as I try to muddle through various clickings and typings and whatever who knows what else.
+Now, I've configured so many machines for software development over the years. I've written Ansible, Saltstack, Terraform, CloudFormation, godawful hand-coded shell scripts and other junk, some Azure biz, and various other things I'm forgetting in order to configure cloud machines. By contrast, when it comes to _personal_ machines, my "process" has been entirely nonexistent. These infrequent attempts are all fuzzy, manual and really based on my entirely fallible memory as I try to muddle through various clickings and typings and whatever who knows what else to get back to some semblance of a development machine that feels vaguely familiar.
 
-Compared with my hand-rolled, relying on memory crap, the NixOS feedback loop is incredible.
+In short, compared with my hand-rolled, relying-on-memory crap, the NixOS feedback loop is incredible.
 
 I was shocked: You're telling me I can install things and I don't need to modify `$PATH` or figure out where they landed?! You're telling me I can _try stuff out_ without committing to installing it on my machine?! You're telling me that every time I boot, any garbage I've manually added via homebrew or whatever is magically cleared away?!
 
@@ -62,15 +62,17 @@ The promise of writing a single configuration file (or one broken up pragmatical
   <figcaption>"NixOS Logo" by Simon Frankau, Tim Cuthbertson, and Daniel Baker (NixOS Marketing Team) — <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></figcaption>
 </figure>
 
-So I was hooked. So much so that I bought the my first new personal computer in __22 years__. All this time, I've just been using whatever work machine I was given, but my new goal became: "buy a machine. use Nix from the start."
+I was hooked. So much so that I just purchased my first new personal computer in __22 years__. All this time I've just been using whatever work machine I was given, but after the conference my new goal became: "buy a machine. use Nix from the start."
 
 So I did just that (see photo at top).
 
-Originally, I was thinking about getting a Linux machines but I've been using Macbook Pros for 15+ years, so I'm pretty spoiled by the screens and the keyboards and the solid feel of things. I briefly looked at [Framework](https://frame.work/linux) and [Tuxdeo](https://www.tuxedocomputers.com/en) and a few others and while they look pretty nice, I couldn't guarantee that I would love the screens and keyboards and I was too shy to shell out cash for something I wasn't sure I'd love. What I really needed was a way to demo these machines for a few weeks to see if they'd work for me.
+Originally, I was thinking about getting a Linux machine but I've been using Macbook Pros for 15+ years, so I'm pretty spoiled by the screens and the keyboards and the solid feel of things. I briefly looked at [Framework](https://frame.work/linux) and [Tuxdeo](https://www.tuxedocomputers.com/en) and a few others and while they do look pretty nice, and I'd be fine with running Linux, I couldn't guarantee that I would love the screens and keyboards and I was too shy to shell out cash for something I wasn't sure I'd love. What I really needed was a way to demo these machines for a few weeks to see if they'd work for me.
 
-But I didn't have a few weeks; I needed to get a personal machine running Nix _now_, so I bought a Macbook Pro.
+But I didn't have a few weeks; I needed to get a personal machine running Nix _now_.
 
 ## Nix-Darwin
+
+So I bought a Macbook Pro.
 
 Now, before you judge me for being a spendthrift mercedes-computer shopper, keep in mind what I mentioned above: I haven't bought a new computer since __2004__, so I guess I'm saying I'm due.
 
@@ -78,11 +80,9 @@ Running OSX meant no NixOS, but I can still run the Nix package manager and conf
 
 But it's still so rad: you can turn off the system bell when the machine boots, you can programmatically set your dock, Mission Control, spaces, touchpad gestures, terminal programs, GUI programs, homebrew, and thousands of other features all using a single configuration file (or multiple if that's your flavor).
 
-And here's the most incredible part: write it one time, and use it forever. Use it on one machine or thousands of machines. No more manual, fallible-memory based configurations!
+And here's the most amazing part: write it one time, use it forever. Use it on one machine or thousands of machines. No more manual, fallible-memory based configurations!
 
-I put all of my configurations into my [dotfiles repo](https://github.com/erewok/dotfiles).
-
-Now that I've gone to Nix, I'm never going back.
+It did take some work (and, full transparency, a little help from Claude Code), but I put all of my configurations into my [dotfiles repo](https://github.com/erewok/dotfiles), where I am going to use them to set up a new work machine also.
 
 ## And the Nix Community Is Massive
 
@@ -91,3 +91,5 @@ Lastly, there are some really high shoulders we also get to lever ourselves up o
 Want to install Signal and Ghostty and automatically have them land on your dock on a new machine? You can do that.
 
 The Nix community is what makes all of this possible: everything is right there at your fingertips ready to be added to your configuration!
+
+I'm never going back.
