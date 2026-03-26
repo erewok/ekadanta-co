@@ -1,0 +1,81 @@
+---
+pubdate: 2026-03-27
+lede: "A work takes flight when it goes beyond the intentions of its author"
+published: False
+title: "Code is Intentional"
+contentEncoding: ContentMarkdown
+resourceType: BlogPost
+featuredImage: /images/typermed.jpg
+imageAlt: "An old typewriter"
+tags: ["writing", "code", "intentionality", "ai"]
+---
+
+When I was in college I took a few creative writing classes where I'd present poems or short fiction I'd written for critique. Sometimes in those critique sessions, a surprising thing would happen: my peers would read and interpret my work wildly differently than I'd intended. Strangely, the meanings they read into my work were often far beyond any that had even _occurred_ to me, making me a naive reader of my own work.
+
+In spite of how it sounds this was usually a pretty cool outcome (and it typically only happened when people _liked_ something I'd written). It felt like the work was taking flight: it had become independent of me and whatever I'd been thinking about when I wrote it.
+
+Around the time of those undergraduate days, I also read a well-regarded essay by a French theorist named Roland Barthes called "Death of an Author." Barthes' argument was that we have this lazy tendency of looking at what an author _intended_ when we try to pin down the "real meaning" of a work. People tend to talk this way all the time about books, movies, art, any creative work really, saying stuff like "David Lynch wanted us to think about economic hardship when that appendix got squished on the stage."
+
+Barthes suggested that we should stop trying to pin down the intentions of a single human author onto a work of art. Further, if we can stop ourselves from doing this, then the work is _freed_ for innumerable interpretations: there's no specific person's intentional mind at the root of all possible meanings present in the artwork. Put another way, assigning _authorship_ for creative works is a way to _limit_ the possible interpretations for that work!
+
+So that feeling I had of my work-taking-flight is when I independently stumbled on Barthes' ideas in my creative writing classes: my peers would intepret something I'd written in ways well beyond anything I'd anticipated and it felt like the work no longer belonged to me. This represented success for the work: people cared enough to imagine ideas, interpretations, and extensions to my writing which were all way better than what I'd thought of it. With this outcome, it was effectively freed from whatever lame interpretations I may have otherwise saddled it with myself.
+
+## Code Is intentional
+
+I've been thinking about authorship and intentionality a lot this week because I am writing and reading a lot of LLM-generated code via Claude Code and Copilot CLI.
+
+Contra creative writing, reading code is very much about intentionality. Reviewers on pull requests often ask "why" questions: "why did you change this?" or "Why did you make this particular choice?" Outside of PRs, when I'm reading code to understand what it does, I'm often trying to figure out what the original author of that code _intended_. The reason for this is simple: most bugs appear in the _gap_ between what was intended and what the code _actually does_! It's true that sometimes the original intention itself was wrong: maybe the stakeholders asked us to display the wrong information to a user, and later they realized they had asked us to build the wrong thing. But more often, some intention existed originally and the software simply doesn't do that thing.
+
+This gap between actual outcome and intended outcome sometimes arrives because certain ideas are difficult to explicitly encode rigorously in software. For an illustration of this consider the tricky language-specific "gotchas" (also sometimes called "footguns") that programmers love to write about. In Python, for example, there's a [well-known bug](https://docs.python-guide.org/writing/gotchas/#mutable-default-arguments) based on using mutable references in function keyword arguments because these get created _once_ when the function is imported and the parameters are evaluated the first time!
+
+```Python
+def append_to(element, to=[]):
+    to.append(element)
+    return to
+
+my_list = append_to(12)
+print(my_list)
+
+my_other_list = append_to(42)
+print(my_other_list)
+```
+
+This prints the single list which gets mutated on every call:
+
+```sh
+[12]
+[12, 42]
+```
+
+Of course, if I saw this code in a Pull Request (or in a codebase), I would immediately ask myself, "what did the developer _intend_ to happen here?" so I could suggest a fix that matched the original intention. If I'm refactoring already published code, I'll sometimes try to make the code _match_ the original intention or I'll try to make the intention extremely obvious so other code-readers don't get lost, or I'll even adjust the intention of that code to more closely match what our real-world constraints are (maybe multiple users are trying to update the database at the same time and we don't want them to).
+
+There are lots of other subtle ways in which the intentionality of the developer and what-the-code-does diverge, and some of us are acutely aware of and always fighting hard against this divergence: we are constantly trying to pin down our intentions in the code, to make these intentions obivous, to _limit_ the possibilities for divergence to near zero.
+
+## Intentionality in Code is Specifically Limited
+
+It's interesting to contrast code in this way with works of art, where the possibilities for interpretations (at least for satisfying art!) are vast. For code, by contrast, having more than one interpretation is often terrible (not to mention hard to read and understand).
+
+Still, writing code is an interesting creative endeavor, because it's an attempt at rigorous, mathematical logic: it's a way of asking the question "how can I express this _intentional behavior_ in way that precludes any other possible behavior?" (It actually feels like writing Philosophy sometimes...)
+
+But this goal of _eliminating_ unintended behaviors is also why some programmers get so worked up about static types, functional programming, abstract algebra, formal methods, or any additional constraints on code: they're simply not satisfied by the tools available to _limit_ the interpretations expressed by some code.
+
+## This is Why Reviewing AI-Produced Code is So Weird Sometimes
+
+The true motivating idea behind this short rumination is that I often find _reviewing_ AI-generated code in pull requests so disorienting and I think it's because the _intention_ is absent or insufficiently expressed. It's like staring into the void!
+
+An illustration of this problem appeared recently in the [Rust survey on AI](https://nikomatsakis.github.io/rust-project-perspectives-on-ai/feb27-summary.html#poor-quality-prs-are-increasing-in-both-number-and-frequency), published last week as a summary by Niko Matsakis. A few comments from this survey resonated with me, including this one:
+
+> I have no idea how to solve the “sure, you quickly made something plausible-looking, but it’s actually subtly wrong and now you’re wasting everyone’s time” problem. We get way too many PRs “fixing” things that don’t actually solve it, and those seem to largely from AI and wouldn’t have existed without it.
+
+Further, some AI-coded PRs come from contributors who _can't_ speak to the intentions behind the code, and when questioned about it, they feed the questions they're getting back into the machine!
+
+> A few contributors even act as a proxy between the reviewer and the LLM, copy their reviewer’s question, reply with LLM-generated response. __For the love of god, please.__ I want to emphasize this is __incredibly frustrating.__ This is the __top contributing factor to potential burn outs for me.__
+
+
+I've been there and it's __the worst__.
+
+## So What Does Code Mean When It Doesn't?
+
+One (potentially easy) conclusion I draw from this phenomenon is that with the ready availability of tools such as Claude code, it's easier than ever to generate vast amounts of code. But bugs will inevitably appear!
+
+And when they do, my guess is that some companies will sometimes end up hiring developers to read the stuff and figure out what the original intentions were, so they can coerce that code back to whatever they wanted it to do in the first place.
